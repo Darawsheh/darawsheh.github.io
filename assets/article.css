@@ -172,27 +172,23 @@ blockquote {
   font-weight: 700;
 }
 
-.article-footer,
-.comments {
+.article-footer {
   max-width: 780px;
   margin-inline: auto;
   padding-block: clamp(3rem, 7vw, 5rem);
   border-top: 1px solid var(--border);
 }
 
-.article-footer p,
-.comments > p:not(.eyebrow) {
+.article-footer p {
   color: var(--muted);
 }
 
-.comments h2,
 .article-footer h2 {
   font-size: clamp(1.8rem, 4vw, 2.7rem);
 }
 
-.giscus,
-.giscus-frame {
-  width: 100%;
+.comments {
+  display: none;
 }
 
 @media (max-width: 680px) {
