@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clean Architecture vs. DDD Is Usually the Wrong Question | Islam Darawsheh</title>
+  <meta name="description" content="Clean Architecture and Domain-Driven Design are not competing alternatives. One governs dependency direction; the other helps teams model complex business domains.">
+  <meta name="author" content="Islam Darawsheh">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#111827">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app; connect-src 'none'; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <link rel="canonical" href="https://darawsheh.github.io/articles/clean-architecture-vs-ddd/">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/article.css">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Clean Architecture vs. DDD Is Usually the Wrong Question">
+  <meta property="og:description" content="One organizes dependencies; the other models business complexity. Strong systems often use both, selectively.">
+  <meta property="og:url" content="https://darawsheh.github.io/articles/clean-architecture-vs-ddd/">
+  <meta property="article:published_time" content="2026-08-06">
+  <meta property="article:author" content="Islam Darawsheh">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Clean Architecture vs. DDD Is Usually the Wrong Question">
+  <meta name="twitter:description" content="One organizes dependencies; the other models business complexity. Strong systems often use both, selectively.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Clean Architecture vs. DDD Is Usually the Wrong Question",
+    "description": "Clean Architecture and Domain-Driven Design solve different problems and can be combined selectively.",
+    "datePublished": "2026-08-06",
+    "dateModified": "2026-08-06",
+    "author": {
+      "@type": "Person",
+      "name": "Islam Darawsheh",
+      "url": "https://darawsheh.github.io/"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Islam Darawsheh"
+    },
+    "mainEntityOfPage": "https://darawsheh.github.io/articles/clean-architecture-vs-ddd/",
+    "keywords": [
+      "Clean Architecture",
+      "Domain-Driven Design",
+      "DDD",
+      "Software Architecture",
+      ".NET Architecture"
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to article</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/#expertise">Expertise</a>
+        <a href="/#insights">Insights</a>
+        <a href="/#contact">Connect</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="article shell">
+      <header class="article-header">
+        <p class="eyebrow">Software Architecture</p>
+        <h1>Clean Architecture vs. DDD Is Usually the Wrong Question</h1>
+        <p class="article-deck">One organizes dependencies. The other models business complexity. Treating them as competing alternatives creates more confusion than clarity.</p>
+        <div class="article-meta">
+          <span>By Islam Darawsheh</span>
+          <time datetime="2026-08-06">August 6, 2026</time>
+          <span>10 min read</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+        <p class="lead">Architecture discussions often begin with a question that sounds reasonable: <em>Should we use Clean Architecture or Domain-Driven Design?</em> The problem is that the question compares two ideas that operate on different dimensions.</p>
+
+        <p>Clean Architecture is primarily concerned with <strong>dependency direction, separation of policy from implementation, and protection of core business rules</strong>. Domain-Driven Design is primarily concerned with <strong>understanding a business domain, creating a shared language, defining model boundaries, and expressing important rules in software</strong>.</p>
+
+        <aside class="callout">
+          <strong>The central point:</strong>
+          <p>Clean Architecture can give a domain model a protected place to live. DDD can give that protected core meaningful business behavior. Neither automatically provides the other.</p>
+        </aside>
+
+        <h2>Why the comparison keeps happening</h2>
+
+        <p>Both approaches frequently appear in the same architecture diagrams, conference talks, and .NET solution templates. Both mention a domain layer. Both encourage separation from databases and frameworks. That visual overlap makes them look interchangeable.</p>
+
+        <p>But similar diagrams do not imply identical goals. A solution can follow Clean Architecture dependency rules while having a weak, mostly procedural business model. Another solution can apply sophisticated DDD modeling while allowing infrastructure concerns to leak through every boundary.</p>
+
+        <p>The real comparison is not <em>Clean Architecture versus DDD</em>. It is:</p>
+
+        <ul>
+          <li>How should code dependencies be controlled?</li>
+          <li>How should business knowledge be discovered and represented?</li>
+          <li>How much architectural and modeling sophistication does this system actually need?</li>
+        </ul>
+
+        <h2>What Clean Architecture is trying to protect</h2>
+
+        <p>Clean Architecture puts business policy toward the center and volatile implementation details toward the outside. The exact project names are not important. The dependency rule is.</p>
+
+        <p>Code representing important policy should not depend directly on ASP.NET Core, Entity Framework, message brokers, cloud SDKs, file systems, or UI frameworks. Those technologies are useful, but they change for reasons that are different from the reasons business rules change.</p>
+
+        <p>A practical implementation often separates:</p>
+
+        <div class="comparison-grid" aria-label="Typical Clean Architecture responsibilities">
+          <section>
+            <h3>Domain</h3>
+            <p>Core business behavior, invariants, entities, value objects, and domain events.</p>
+          </section>
+          <section>
+            <h3>Application</h3>
+            <p>Use cases, orchestration, authorization decisions, ports, and transaction boundaries.</p>
+          </section>
+          <section>
+            <h3>Infrastructure</h3>
+            <p>Persistence, messaging, external services, storage, and technical adapters.</p>
+          </section>
+          <section>
+            <h3>Presentation</h3>
+            <p>HTTP, UI, serialization, transport concerns, and interaction with users or clients.</p>
+          </section>
+        </div>
+
+        <p>This structure improves replaceability and testability when the boundaries reflect real responsibilities. It becomes ceremony when every simple feature is forced through layers of pass-through interfaces, generic repositories, and one-line services.</p>
+
+        <h2>What DDD is trying to understand</h2>
+
+        <p>DDD begins before project structure. Its most valuable work happens in conversations with domain experts, in the language the team chooses, and in the boundaries it discovers.</p>
+
+        <p>Strategic DDD asks questions such as:</p>
+
+        <ul>
+          <li>What capabilities differentiate the business?</li>
+          <li>Where does a term change meaning?</li>
+          <li>Which models should remain independent?</li>
+          <li>How do teams and systems exchange information?</li>
+        </ul>
+
+        <p>This leads to concepts such as <strong>subdomains, bounded contexts, context maps, and ubiquitous language</strong>. Tactical DDD offers implementation patterns including <strong>aggregates, entities, value objects, repositories, domain services, and domain events</strong>.</p>
+
+        <p>The tactical patterns are not the definition of DDD. Creating an <code>EntityBase</code>, an <code>IAggregateRoot</code> marker, and a collection of domain events does not prove that the model reflects the business. DDD succeeds when the software language and boundaries make business decisions clearer.</p>
+
+        <h2>They answer different questions</h2>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Concern</th>
+                <th scope="col">Clean Architecture</th>
+                <th scope="col">Domain-Driven Design</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Primary question</th>
+                <td>Which code may depend on which code?</td>
+                <td>What model best represents this business area?</td>
+              </tr>
+              <tr>
+                <th scope="row">Main protection</th>
+                <td>Business policy from technical volatility</td>
+                <td>Business meaning from ambiguity and model pollution</td>
+              </tr>
+              <tr>
+                <th scope="row">Key boundaries</th>
+                <td>Architectural layers and dependency inversion</td>
+                <td>Bounded contexts and aggregate consistency boundaries</td>
+              </tr>
+              <tr>
+                <th scope="row">Typical failure</th>
+                <td>Layers without meaningful separation</td>
+                <td>Patterns without domain discovery</td>
+              </tr>
+              <tr>
+                <th scope="row">Can stand alone?</th>
+                <td>Yes, with a simple domain model</td>
+                <td>Yes, with another technical architecture</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>How they work together</h2>
+
+        <p>In a complex business system, a useful combination is straightforward:</p>
+
+        <ol>
+          <li>Use strategic DDD to identify subdomains and bounded contexts.</li>
+          <li>Choose context boundaries that can evolve with limited coupling.</li>
+          <li>Model the most important business behavior inside each relevant context.</li>
+          <li>Use Clean Architecture principles to keep those models independent from delivery and infrastructure details.</li>
+          <li>Integrate contexts through explicit contracts rather than shared internal models.</li>
+        </ol>
+
+        <p>In that arrangement, DDD influences <strong>what the core means and where its boundaries belong</strong>. Clean Architecture influences <strong>how dependencies around that core are controlled</strong>.</p>
+
+        <pre><code>Presentation  ─┐
+Infrastructure ├──&gt; Application ───&gt; Domain
+External APIs ─┘
+
+Bounded Context A &lt;── explicit contract ──&gt; Bounded Context B</code></pre>
+
+        <p>The first view is about dependency direction inside a deployable unit. The second is about model boundaries across business capabilities. Mixing those views into one argument is the source of much of the confusion.</p>
+
+        <h2>Common ways teams get both wrong</h2>
+
+        <h3>1. Clean Architecture becomes a folder convention</h3>
+        <p>The solution contains projects named Domain, Application, Infrastructure, and API, but business logic remains in handlers, controllers, database queries, or mapping profiles. The names are correct; the dependency discipline and responsibility boundaries are not.</p>
+
+        <h3>2. DDD becomes an object-oriented vocabulary exercise</h3>
+        <p>The code includes aggregates and value objects, but the team has not established a shared language or separated conflicting models. Tactical patterns are applied without strategic modeling.</p>
+
+        <h3>3. Every application is treated as a complex domain</h3>
+        <p>A small CRUD administration tool does not automatically need aggregates, domain events, specifications, repositories, commands, queries, and multiple projects. Complexity should be earned by the problem, not imported from a template.</p>
+
+        <h3>4. The database becomes the domain model</h3>
+        <p>Tables and ORM entities dictate the language and behavior of the application. This may be sufficient for data-centric software, but it becomes costly when business rules are complex and state transitions must be protected.</p>
+
+        <h3>5. Boundaries multiply without operational value</h3>
+        <p>More abstractions do not necessarily produce more flexibility. A boundary is valuable when it protects a meaningful policy, separates a rate of change, supports independent evolution, or clarifies ownership.</p>
+
+        <h2>A practical decision guide</h2>
+
+        <div class="decision-list">
+          <section>
+            <h3>Simple data-entry or CRUD system</h3>
+            <p>Use a straightforward layered or modular design. Apply dependency inversion where volatility justifies it. Avoid full tactical DDD unless real invariants emerge.</p>
+          </section>
+          <section>
+            <h3>Integration-heavy system with modest business rules</h3>
+            <p>Clean boundaries around external systems are highly valuable. Use domain language consistently, but keep the domain model lightweight.</p>
+          </section>
+          <section>
+            <h3>Complex, changing business domain</h3>
+            <p>Invest in strategic DDD and collaborative modeling. Protect the resulting model with clear dependency rules and infrastructure adapters.</p>
+          </section>
+          <section>
+            <h3>Large legacy modernization</h3>
+            <p>Use bounded contexts to identify seams and ownership. Introduce Clean Architecture incrementally around new or extracted capabilities instead of rewriting everything at once.</p>
+          </section>
+        </div>
+
+        <h2>What this means for .NET teams</h2>
+
+        <p>A typical .NET solution may place domain types in one project, use cases in another, and EF Core or messaging adapters in infrastructure projects. That can be a sensible starting point, but project references are only mechanical enforcement.</p>
+
+        <p>The harder questions remain:</p>
+
+        <ul>
+          <li>Are invariants enforced in one reliable place?</li>
+          <li>Does the code use the same language as the business?</li>
+          <li>Are transaction and consistency boundaries explicit?</li>
+          <li>Can technical integrations change without rewriting policy?</li>
+          <li>Can one business area evolve without contaminating another?</li>
+        </ul>
+
+        <p>A good architecture makes the answers visible in code. A poor architecture hides weak decisions behind sophisticated project names.</p>
+
+        <h2>The better question</h2>
+
+        <p>Instead of asking, <em>“Clean Architecture or DDD?”</em>, ask:</p>
+
+        <blockquote>
+          What business complexity must we model, which policies must we protect, and what is the simplest set of boundaries that allows this system to evolve safely?
+        </blockquote>
+
+        <p>The answer may require Clean Architecture, DDD, both, or only selected ideas from each. Architecture should be proportional to the problem.</p>
+
+        <p><strong>Use DDD where business complexity deserves a model. Use Clean Architecture where important policy deserves protection. Do not use either merely to make a solution look architectural.</strong></p>
+      </div>
+
+      <footer class="article-footer">
+        <div>
+          <p class="eyebrow">About the author</p>
+          <h2>Islam Darawsheh</h2>
+          <p>Software Architect and Technical Lead focused on enterprise .NET, secure systems, SaaS platforms, integration-heavy solutions, and maintainable software delivery.</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/">View profile</a>
+          <a class="button" href="https://www.linkedin.com/in/darawsheh/">LinkedIn</a>
+        </div>
+      </footer>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p>Join the discussion using your GitHub account. Reactions and comments are stored in this site's GitHub Discussions.</p>
+        <!-- GISCUS_WIDGET -->
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div>
+  </footer>
+  <script src="../../assets/script.js" defer></script>
+  <script src="../../assets/article.js" defer></script>
+</body>
+</html>
