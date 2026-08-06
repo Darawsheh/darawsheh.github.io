@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://darawsheh.github.io/sitemap.xml
