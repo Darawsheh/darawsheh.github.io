@@ -82,10 +82,45 @@ h3 { margin-top: 0; font-size: 1.12rem; }
 .site-footer { border-top: 1px solid var(--border); padding-block: 2rem; color: var(--muted); font-size: .9rem; }
 
 @media (max-width: 780px) {
-  nav { display: none; }
-  .theme-toggle { margin-left: auto; }
+  .header-inner { gap: .6rem; }
+  nav {
+    display: flex;
+    gap: .45rem;
+    margin-left: auto;
+  }
+  nav a { display: none; }
+  nav a[href="/"],
+  nav a[href="/articles/"] {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.7rem;
+    padding: .45rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: .65rem;
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 700;
+  }
+  .theme-toggle {
+    margin-left: 0;
+    white-space: nowrap;
+  }
   .card-grid, .principles { grid-template-columns: 1fr; }
   .work-list li { grid-template-columns: 1fr; gap: .35rem; }
+}
+
+@media (max-width: 420px) {
+  .shell { width: min(1120px, calc(100% - 1.2rem)); }
+  .header-inner { gap: .4rem; }
+  nav a[href="/"],
+  nav a[href="/articles/"] {
+    padding-inline: .6rem;
+    font-size: .88rem;
+  }
+  .theme-toggle {
+    padding-inline: .6rem;
+    font-size: .88rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
