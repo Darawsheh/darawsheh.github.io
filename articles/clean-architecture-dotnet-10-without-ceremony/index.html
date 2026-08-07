@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clean Architecture in .NET 10: Stop Adding Layers, Start Protecting Decisions | Islam Darawsheh</title>
+  <meta name="description" content="A production-minded .NET 10 walkthrough of Clean Architecture using UUIDv7, strong domain types, authoritative pricing, EF Core boundaries, Minimal APIs, and focused tests without unnecessary ceremony.">
+  <meta name="author" content="Islam Darawsheh">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#111827">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app; connect-src 'none'; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <link rel="canonical" href="https://darawsheh.github.io/articles/clean-architecture-dotnet-10-without-ceremony/">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/article.css">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Clean Architecture in .NET 10: Stop Adding Layers, Start Protecting Decisions">
+  <meta property="og:description" content="One order feature, end to end: domain rules, UUIDv7, authoritative pricing, application boundaries, EF Core, Minimal APIs, and tests—with no abstraction theater.">
+  <meta property="og:url" content="https://darawsheh.github.io/articles/clean-architecture-dotnet-10-without-ceremony/">
+  <meta property="article:published_time" content="2026-08-07">
+  <meta property="article:author" content="Islam Darawsheh">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Clean Architecture in .NET 10: Stop Adding Layers, Start Protecting Decisions">
+  <meta name="twitter:description" content="A practical .NET 10 feature walkthrough that uses boundaries only where they protect real decisions.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Clean Architecture in .NET 10: Stop Adding Layers, Start Protecting Decisions",
+    "description": "A production-minded Clean Architecture walkthrough in .NET 10 using UUIDv7, strong domain types, authoritative pricing, EF Core, Minimal APIs, and focused tests.",
+    "datePublished": "2026-08-07",
+    "dateModified": "2026-08-07",
+    "author": {
+      "@type": "Person",
+      "name": "Islam Darawsheh",
+      "url": "https://darawsheh.github.io/"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Islam Darawsheh"
+    },
+    "mainEntityOfPage": "https://darawsheh.github.io/articles/clean-architecture-dotnet-10-without-ceremony/",
+    "keywords": [
+      "Clean Architecture",
+      ".NET 10",
+      "C#",
+      "UUIDv7",
+      "Domain-Driven Design",
+      "EF Core",
+      "Minimal APIs",
+      "Software Architecture"
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to article</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/#expertise">Expertise</a>
+        <a href="/articles/">Articles</a>
+        <a href="/#contact">Connect</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="article shell">
+      <header class="article-header">
+        <p class="eyebrow">.NET 10 · Software Architecture</p>
+        <h1>Clean Architecture in .NET 10: Stop Adding Layers, Start Protecting Decisions</h1>
+        <p class="article-deck">A Clean Architecture codebase should not be judged by how many projects, interfaces, handlers, or patterns it contains. The useful question is simpler: which decisions are important enough to protect from change?</p>
+        <div class="article-meta">
+          <span>By Islam Darawsheh</span>
+          <time datetime="2026-08-07">August 7, 2026</time>
+          <span>11 min read</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+        <p class="lead">Yesterday I argued that Clean Architecture and Domain-Driven Design are not competing alternatives. Today I want to make that argument concrete with one .NET 10 feature from HTTP request to domain model to persistence.</p>
+
+        <p>The feature is intentionally ordinary: <strong>place an order</strong>. The interesting part is not the endpoint. It is deciding where business authority lives, which dependencies deserve boundaries, and which abstractions we can deliberately avoid.</p>
+
+        <aside class="callout">
+          <strong>The rule for this example:</strong>
+          <p>Add a boundary only when it protects policy, ownership, consistency, or a meaningful source of technical volatility.</p>
+        </aside>
+
+        <h2>Start with the decisions, not the projects</h2>
+
+        <p>Before creating <code>Domain</code>, <code>Application</code>, <code>Infrastructure</code>, and <code>Api</code> projects, identify what can actually go wrong.</p>
+
+        <ul>
+          <li>The client must not choose the product price.</li>
+          <li>An order quantity must be greater than zero.</li>
+          <li>An order cannot silently mix currencies.</li>
+          <li>Persistence must not define the domain model.</li>
+          <li>HTTP must not become the business layer.</li>
+        </ul>
+
+        <p>Those are decisions worth protecting. The architecture exists to make those decisions difficult to violate.</p>
+
+        <h2>UUIDv7 in .NET 10: still a Guid</h2>
+
+        <p>One small modernization is worth making immediately. In .NET, the runtime type for a UUID is still <code>Guid</code>. We do not replace it with a new <code>Uuid</code> type. What changes is how we generate the value.</p>
+
+        <pre><code>public readonly record struct OrderId(Guid Value)
+{
+    public static OrderId New() =&gt;
+        new(Guid.CreateVersion7());
+}</code></pre>
+
+        <p><code>Guid.CreateVersion7()</code> creates an RFC 9562 UUID version 7. Unlike the random layout normally produced by <code>Guid.NewGuid()</code>, UUIDv7 contains time-ordered bits, which can be useful for application-generated identifiers and ordered ingestion.</p>
+
+        <aside class="callout">
+          <strong>Database caveat:</strong>
+          <p>Do not turn “UUIDv7 is time ordered” into “every database index will automatically become sequential.” Database UUID comparison and storage semantics matter. Verify the actual provider—especially when using SQL Server <code>uniqueidentifier</code>—before making index-locality claims.</p>
+        </aside>
+
+        <p>I also prefer a domain-specific ID wrapper over passing naked <code>Guid</code> values everywhere. It prevents accidentally supplying a <code>CustomerId</code> where a <code>ProductId</code> was expected, while keeping serialization and persistence boundaries free to use plain UUID values.</p>
+
+        <pre><code>public readonly record struct ProductId(Guid Value);
+public readonly record struct CustomerId(Guid Value);
+public readonly record struct OrderId(Guid Value)
+{
+    public static OrderId New() =&gt;
+        new(Guid.CreateVersion7());
+}</code></pre>
+
+        <h2>Put invariants in types that cannot ignore them</h2>
+
+        <p>A quantity is not just an <code>int</code> if zero and negative values are invalid throughout the domain. Encoding that rule once is stronger than remembering to repeat an <code>if</code> statement in controllers, handlers, background jobs, and import processes.</p>
+
+        <pre><code>public readonly record struct Quantity
+{
+    public int Value { get; }
+
+    private Quantity(int value) =&gt; Value = value;
+
+    public static Quantity From(int value)
+    {
+        if (value &lt;= 0)
+            throw new DomainException(
+                "Quantity must be greater than zero.");
+
+        return new Quantity(value);
+    }
+}</code></pre>
+
+        <p>The same idea applies to money. A production model should not let unrelated currencies be added silently.</p>
+
+        <pre><code>public readonly record struct Money
+{
+    public decimal Amount { get; }
+    public string Currency { get; }
+
+    private Money(decimal amount, string currency)
+    {
+        Amount = amount;
+        Currency = currency;
+    }
+
+    public static Money Of(decimal amount, string currency)
+    {
+        if (amount &lt; 0)
+            throw new DomainException("Money cannot be negative.");
+
+        if (string.IsNullOrWhiteSpace(currency))
+            throw new DomainException("Currency is required.");
+
+        return new Money(
+            decimal.Round(amount, 2, MidpointRounding.ToEven),
+            currency.Trim().ToUpperInvariant());
+    }
+
+    public static Money Zero(string currency) =&gt; Of(0, currency);
+
+    public Money Multiply(int quantity) =&gt;
+        Of(Amount * quantity, Currency);
+
+    public static Money operator +(Money left, Money right)
+    {
+        if (!string.Equals(
+                left.Currency,
+                right.Currency,
+                StringComparison.Ordinal))
+        {
+            throw new DomainException(
+                "Cannot add different currencies.");
+        }
+
+        return Of(
+            left.Amount + right.Amount,
+            left.Currency);
+    }
+}</code></pre>
+
+        <p>Whether two decimal places are universally correct is a separate domain question. The important point is that the rule has an owner. If the product later supports currencies with different minor-unit rules, this type is where that decision can evolve.</p>
+
+        <h2>The aggregate should protect behavior, not mirror tables</h2>
+
+        <pre><code>public sealed class Order
+{
+    private readonly List&lt;OrderItem&gt; _items = [];
+
+    private Order() { }
+
+    private Order(
+        OrderId id,
+        CustomerId customerId,
+        string currency)
+    {
+        Id = id;
+        CustomerId = customerId;
+        Currency = currency;
+    }
+
+    public OrderId Id { get; private set; }
+    public CustomerId CustomerId { get; private set; }
+    public string Currency { get; private set; } = string.Empty;
+    public IReadOnlyCollection&lt;OrderItem&gt; Items =&gt; _items;
+
+    public Money Total =&gt;
+        _items.Aggregate(
+            Money.Zero(Currency),
+            (sum, item) =&gt; sum + item.Subtotal);
+
+    public static Order Create(
+        CustomerId customerId,
+        string currency)
+    {
+        if (string.IsNullOrWhiteSpace(currency))
+            throw new DomainException("Currency is required.");
+
+        return new Order(
+            OrderId.New(),
+            customerId,
+            currency.Trim().ToUpperInvariant());
+    }
+
+    public void AddItem(
+        ProductId productId,
+        Money unitPrice,
+        Quantity quantity)
+    {
+        if (!string.Equals(
+                unitPrice.Currency,
+                Currency,
+                StringComparison.Ordinal))
+        {
+            throw new DomainException(
+                "Order items must use the order currency.");
+        }
+
+        _items.Add(
+            new OrderItem(
+                productId,
+                unitPrice,
+                quantity));
+    }
+}</code></pre>
+
+        <pre><code>public sealed class OrderItem
+{
+    private OrderItem() { }
+
+    internal OrderItem(
+        ProductId productId,
+        Money unitPrice,
+        Quantity quantity)
+    {
+        ProductId = productId;
+        UnitPrice = unitPrice;
+        Quantity = quantity;
+    }
+
+    public ProductId ProductId { get; private set; }
+    public Money UnitPrice { get; private set; }
+    public Quantity Quantity { get; private set; }
+
+    public Money Subtotal =&gt;
+        UnitPrice.Multiply(Quantity.Value);
+}</code></pre>
+
+        <p>This is not “DDD because it has entities.” The useful part is that invalid state transitions have fewer places to hide. The model owns behavior that must remain true regardless of whether the caller is HTTP, a message consumer, an admin tool, or a test.</p>
+
+        <h2>The most important security decision: never trust the client price</h2>
+
+        <p>An early version of this example could accept <code>ProductId</code>, <code>Price</code>, and <code>Quantity</code> in the command. That would make the code shorter—and the business rule wrong.</p>
+
+        <p>The request should contain what the customer is allowed to decide:</p>
+
+        <pre><code>public sealed record PlaceOrderRequest(
+    Guid CustomerId,
+    IReadOnlyList&lt;PlaceOrderItemRequest&gt; Items);
+
+public sealed record PlaceOrderItemRequest(
+    Guid ProductId,
+    int Quantity);</code></pre>
+
+        <p>Notice what is missing: <strong>price</strong>. Pricing is authoritative server-side data. The application use case resolves it from a trusted catalog boundary.</p>
+
+        <h2>Application ports should describe what the use case needs</h2>
+
+        <pre><code>public sealed record ProductSnapshot(
+    ProductId Id,
+    Money Price,
+    bool IsActive);
+
+public interface IProductCatalog
+{
+    Task&lt;IReadOnlyDictionary&lt;ProductId, ProductSnapshot&gt;&gt;
+        GetByIdsAsync(
+            IReadOnlyCollection&lt;ProductId&gt; productIds,
+            CancellationToken cancellationToken);
+}
+
+public interface IOrderRepository
+{
+    Task AddAsync(
+        Order order,
+        CancellationToken cancellationToken);
+}
+
+public interface IUnitOfWork
+{
+    Task SaveChangesAsync(
+        CancellationToken cancellationToken);
+}</code></pre>
+
+        <p>These interfaces are not there because every class needs an interface. They exist because product pricing, persistence, and transaction completion are external concerns whose implementations may change independently of the use case.</p>
+
+        <h2>The use case: orchestration without stealing the domain's job</h2>
+
+        <pre><code>public sealed record PlaceOrderCommand(
+    Guid CustomerId,
+    IReadOnlyList&lt;PlaceOrderLine&gt; Items);
+
+public sealed record PlaceOrderLine(
+    Guid ProductId,
+    int Quantity);
+
+public sealed class PlaceOrderHandler(
+    IProductCatalog catalog,
+    IOrderRepository orders,
+    IUnitOfWork unitOfWork)
+{
+    public async Task&lt;OrderId&gt; Handle(
+        PlaceOrderCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (command.Items.Count == 0)
+            throw new ValidationException(
+                "At least one item is required.");
+
+        var productIds = command.Items
+            .Select(x =&gt; new ProductId(x.ProductId))
+            .Distinct()
+            .ToArray();
+
+        var products = await catalog.GetByIdsAsync(
+            productIds,
+            cancellationToken);
+
+        var missing = productIds
+            .Where(id =&gt; !products.ContainsKey(id))
+            .ToArray();
+
+        if (missing.Length != 0)
+            throw new ValidationException(
+                "One or more products do not exist.");
+
+        var currencies = products.Values
+            .Select(x =&gt; x.Price.Currency)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        if (currencies.Length != 1)
+            throw new ValidationException(
+                "All products must use the same currency.");
+
+        var order = Order.Create(
+            new CustomerId(command.CustomerId),
+            currencies[0]);
+
+        foreach (var line in command.Items)
+        {
+            var productId = new ProductId(line.ProductId);
+            var product = products[productId];
+
+            if (!product.IsActive)
+                throw new ValidationException(
+                    $"Product {productId.Value} is not available.");
+
+            order.AddItem(
+                product.Id,
+                product.Price,
+                Quantity.From(line.Quantity));
+        }
+
+        await orders.AddAsync(
+            order,
+            cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(
+            cancellationToken);
+
+        return order.Id;
+    }
+}</code></pre>
+
+        <p>There are two details here that matter more than the class name. First, the catalog lookup is batched instead of performing an N+1 query inside the loop. Second, the handler orchestrates; it does not reimplement quantity, money, or order invariants.</p>
+
+        <h2>Infrastructure implements the boundary</h2>
+
+        <p>EF Core belongs here because EF Core is a persistence choice. The application use case should not care whether the implementation uses PostgreSQL, SQL Server, or a different persistence adapter.</p>
+
+        <pre><code>internal sealed class EfOrderRepository(
+    OrderingDbContext dbContext)
+    : IOrderRepository
+{
+    public Task AddAsync(
+        Order order,
+        CancellationToken cancellationToken)
+    {
+        return dbContext.Orders
+            .AddAsync(order, cancellationToken)
+            .AsTask();
+    }
+}
+
+internal sealed class EfUnitOfWork(
+    OrderingDbContext dbContext)
+    : IUnitOfWork
+{
+    public async Task SaveChangesAsync(
+        CancellationToken cancellationToken)
+    {
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+    }
+}</code></pre>
+
+        <p>Strong IDs can be mapped explicitly instead of forcing persistence primitives into the domain:</p>
+
+        <pre><code>builder.Property(x =&gt; x.Id)
+    .HasConversion(
+        id =&gt; id.Value,
+        value =&gt; new OrderId(value))
+    .ValueGeneratedNever();
+
+builder.Property(x =&gt; x.CustomerId)
+    .HasConversion(
+        id =&gt; id.Value,
+        value =&gt; new CustomerId(value));</code></pre>
+
+        <p><code>ValueGeneratedNever()</code> communicates another real decision: the application creates the UUIDv7; the database does not replace it.</p>
+
+        <h2>The HTTP endpoint should stay boring</h2>
+
+        <pre><code>app.MapPost(
+    "/orders",
+    async (
+        PlaceOrderRequest request,
+        PlaceOrderHandler handler,
+        CancellationToken cancellationToken) =&gt;
+    {
+        var command = new PlaceOrderCommand(
+            request.CustomerId,
+            request.Items
+                .Select(x =&gt; new PlaceOrderLine(
+                    x.ProductId,
+                    x.Quantity))
+                .ToArray());
+
+        var orderId = await handler.Handle(
+            command,
+            cancellationToken);
+
+        return Results.Created(
+            $"/orders/{orderId.Value}",
+            new { id = orderId.Value });
+    });</code></pre>
+
+        <p>There is no business rule in this endpoint. It translates transport data, calls the use case, and translates the result. That is exactly how interesting I want the presentation layer to be.</p>
+
+        <h2>Tests should prove the decisions</h2>
+
+        <p>Do not test layers because the diagram has layers. Test the behavior that justified the boundary.</p>
+
+        <pre><code>[Fact]
+public void Quantity_rejects_zero()
+{
+    var exception = Assert.Throws&lt;DomainException&gt;(
+        () =&gt; Quantity.From(0));
+
+    Assert.Equal(
+        "Quantity must be greater than zero.",
+        exception.Message);
+}</code></pre>
+
+        <p>A second test should prove that the total comes from trusted catalog pricing rather than client input. The API contract already helps: there is no price field for a malicious client to modify.</p>
+
+        <pre><code>[Fact]
+public async Task PlaceOrder_uses_authoritative_catalog_price()
+{
+    var productId = new ProductId(Guid.CreateVersion7());
+    var customerId = Guid.CreateVersion7();
+
+    var catalog = new FakeProductCatalog(
+        new ProductSnapshot(
+            productId,
+            Money.Of(125m, "AED"),
+            IsActive: true));
+
+    var orders = new CapturingOrderRepository();
+    var unitOfWork = new FakeUnitOfWork();
+
+    var handler = new PlaceOrderHandler(
+        catalog,
+        orders,
+        unitOfWork);
+
+    await handler.Handle(
+        new PlaceOrderCommand(
+            customerId,
+            [new PlaceOrderLine(productId.Value, 2)]),
+        CancellationToken.None);
+
+    Assert.NotNull(orders.AddedOrder);
+    Assert.Equal(250m, orders.AddedOrder.Total.Amount);
+    Assert.Equal("AED", orders.AddedOrder.Total.Currency);
+}</code></pre>
+
+        <p>The test is valuable because it protects a business and security decision. A test that merely verifies that a handler called a repository once is much less interesting unless that interaction itself represents required behavior.</p>
+
+        <h2>What I deliberately did not add</h2>
+
+        <div class="decision-list">
+          <section>
+            <h3>Generic IRepository&lt;T&gt;</h3>
+            <p>The use case needs orders, not an abstraction over every possible entity operation.</p>
+          </section>
+          <section>
+            <h3>IOrderService + OrderManager</h3>
+            <p>Extra pass-through layers do not create separation. They create navigation.</p>
+          </section>
+          <section>
+            <h3>AutoMapper</h3>
+            <p>Three explicit fields are clearer than adding a mapping dependency for ceremony.</p>
+          </section>
+          <section>
+            <h3>MediatR by default</h3>
+            <p>Useful when pipelines, behaviors, or dispatching justify it. Unnecessary when it only forwards one call.</p>
+          </section>
+          <section>
+            <h3>Interface per class</h3>
+            <p>Interfaces belong at meaningful boundaries, not beside every concrete type.</p>
+          </section>
+          <section>
+            <h3>Database-shaped domain types</h3>
+            <p>The persistence model adapts to business meaning, not the other way around.</p>
+          </section>
+        </div>
+
+        <h2>So where is the Clean Architecture?</h2>
+
+        <p>It is not in the number of folders. It is in the direction of authority.</p>
+
+        <pre><code>HTTP Request
+    │
+    ▼
+Application Use Case
+    │
+    ├──&gt; Domain Model
+    │      owns invariants
+    │
+    ├──&gt; IProductCatalog
+    │      trusted pricing boundary
+    │
+    └──&gt; IOrderRepository / IUnitOfWork
+           persistence boundary
+
+Infrastructure ──implements──&gt; Application ports</code></pre>
+
+        <p>The domain does not know EF Core. The application does not know which database is underneath it. The endpoint does not decide price. Infrastructure does not own business rules.</p>
+
+        <p>That is enough architecture to protect the decisions we identified at the beginning.</p>
+
+        <h2>When I would make it simpler</h2>
+
+        <p>If this were a small internal CRUD screen with no meaningful invariants, no pricing authority, and no significant integration volatility, I would probably collapse several of these boundaries. Clean Architecture is not a tax every application must pay.</p>
+
+        <p>But once the business rules become expensive to violate, the boundaries start earning their keep.</p>
+
+        <blockquote>
+          Good architecture does not maximize abstraction. It makes important decisions explicit, testable, and difficult to accidentally bypass.
+        </blockquote>
+
+        <p>That is the version of Clean Architecture I want in a .NET 10 codebase: modern where modern features help, domain-focused where the business deserves protection, and intentionally boring everywhere else.</p>
+      </div>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p class="comments-intro">Which abstraction would you remove first from a typical Clean Architecture template?</p>
+        <script src="https://giscus.app/client.js"
+                data-repo="Darawsheh/darawsheh.github.io"
+                data-repo-id="R_kgDOTv89MQ"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOTv89Mc4DC0Gm"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
+      </section>
+
+      <footer class="article-footer">
+        <div>
+          <p class="eyebrow">About the author</p>
+          <h2>Islam Darawsheh</h2>
+          <p>Software Architect and Technical Lead focused on enterprise .NET, secure systems, SaaS platforms, integration-heavy solutions, and maintainable software delivery.</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/articles/">More articles</a>
+          <a class="button" href="https://www.linkedin.com/in/darawsheh/">LinkedIn</a>
+        </div>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div>
+  </footer>
+  <script src="../../assets/script.js" defer></script>
+</body>
+</html>
