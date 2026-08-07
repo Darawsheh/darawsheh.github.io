@@ -423,13 +423,13 @@ public sealed class PlaceOrderHandler(
     OrderingDbContext dbContext)
     : IOrderRepository
 {
-    public Task AddAsync(
+    public async Task AddAsync(
         Order order,
         CancellationToken cancellationToken)
     {
-        return dbContext.Orders
-            .AddAsync(order, cancellationToken)
-            .AsTask();
+        await dbContext.Orders.AddAsync(
+            order,
+            cancellationToken);
     }
 }
 
