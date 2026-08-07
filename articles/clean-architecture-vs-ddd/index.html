@@ -8,7 +8,7 @@
   <meta name="author" content="Islam Darawsheh">
   <meta name="robots" content="index,follow">
   <meta name="theme-color" content="#111827">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app; connect-src 'none'; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
   <link rel="canonical" href="https://darawsheh.github.io/articles/clean-architecture-vs-ddd/">
   <link rel="stylesheet" href="../../assets/styles.css">
   <link rel="stylesheet" href="../../assets/article.css">
@@ -28,7 +28,7 @@
     "headline": "Clean Architecture vs. DDD Is Usually the Wrong Question",
     "description": "Clean Architecture and Domain-Driven Design solve different problems and can be combined selectively.",
     "datePublished": "2026-08-06",
-    "dateModified": "2026-08-06",
+    "dateModified": "2026-08-07",
     "author": {
       "@type": "Person",
       "name": "Islam Darawsheh",
@@ -57,7 +57,7 @@
       <nav aria-label="Primary navigation">
         <a href="/">Home</a>
         <a href="/#expertise">Expertise</a>
-        <a href="/#insights">Insights</a>
+        <a href="/articles/">Articles</a>
         <a href="/#contact">Connect</a>
       </nav>
       <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
@@ -276,6 +276,28 @@ Bounded Context A &lt;── explicit contract ──&gt; Bounded Context B</cod
 
         <p><strong>Use DDD where business complexity deserves a model. Use Clean Architecture where important policy deserves protection. Do not use either merely to make a solution look architectural.</strong></p>
       </div>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p class="comments-intro">Share your thoughts, questions, or reactions using your GitHub account.</p>
+        <script src="https://giscus.app/client.js"
+                data-repo="Darawsheh/darawsheh.github.io"
+                data-repo-id="R_kgDOTv89MQ"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOTv89Mc4DC0Gm"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
+      </section>
 
       <footer class="article-footer">
         <div>
