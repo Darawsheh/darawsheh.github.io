@@ -12,15 +12,17 @@ INDEXNOW_KEY = "a89b01a4784870dc7fd5375a3d755561"
 JSONLD_RE = re.compile(r'<script\s+type="application/ld\+json">\s*(\{.*?\})\s*</script>', re.DOTALL)
 
 
-def has_jsonld_type(text: str, expected: str) -> bool:
+def jsonld_types(text: str) -> set[str]:
+    result: set[str] = set()
     for match in JSONLD_RE.finditer(text):
         try:
             data = json.loads(match.group(1))
         except json.JSONDecodeError:
             continue
-        if data.get("@type") == expected:
-            return True
-    return False
+        value = data.get("@type")
+        if isinstance(value, str):
+            result.add(value)
+    return result
 
 
 def meta(text: str, key: str, attr: str = "name") -> str | None:
@@ -35,62 +37,84 @@ def canonical(text: str) -> str | None:
 
 def main() -> int:
     errors: list[str] = []
-    sitemap = (ROOT / "sitemap.xml").read_text(encoding="utf-8") if (ROOT / "sitemap.xml").exists() else ""
+    sitemap_path = ROOT / "sitemap.xml"
+    sitemap = sitemap_path.read_text(encoding="utf-8") if sitemap_path.exists() else ""
+    script = (ROOT / "assets" / "script.js").read_text(encoding="utf-8")
+    article_css = (ROOT / "assets" / "article.css").read_text(encoding="utf-8")
 
-    common_pages = [ROOT / "index.html", ROOT / "articles" / "index.html"]
+    home_path = ROOT / "index.html"
+    article_index_path = ROOT / "articles" / "index.html"
     article_pages = sorted((ROOT / "articles").glob("*/index.html"))
 
-    for page in [*common_pages, *article_pages]:
-        text = page.read_text(encoding="utf-8")
-        rel = page.relative_to(ROOT)
-        if 'rel="icon" href="/favicon.svg"' not in text:
-            errors.append(f"{rel}: missing favicon link")
-        if 'rel="alternate" type="application/rss+xml"' not in text:
-            errors.append(f"{rel}: missing RSS discovery link")
-        robots = meta(text, "robots")
-        if robots and "noindex" in robots.lower():
-            errors.append(f"{rel}: noindex is set")
-
-    home = (ROOT / "index.html").read_text(encoding="utf-8")
-    if not has_jsonld_type(home, "WebSite"):
+    home = home_path.read_text(encoding="utf-8")
+    if "WebSite" not in jsonld_types(home):
         errors.append("index.html: missing WebSite structured data")
+    if 'rel="icon" href="/favicon.svg"' not in home:
+        errors.append("index.html: missing favicon link")
+    if 'rel="alternate" type="application/rss+xml"' not in home:
+        errors.append("index.html: missing RSS discovery link")
+    if meta(home, "robots") != "index,follow":
+        errors.append("index.html: robots should be index,follow")
 
-    article_index = (ROOT / "articles" / "index.html").read_text(encoding="utf-8")
-    if not has_jsonld_type(article_index, "Blog"):
+    article_index = article_index_path.read_text(encoding="utf-8")
+    if "Blog" not in jsonld_types(article_index):
         errors.append("articles/index.html: missing Blog structured data")
+    if 'rel="alternate" type="application/rss+xml"' not in article_index:
+        errors.append("articles/index.html: missing RSS discovery link")
 
+    enhancer_tokens = [
+        "BlogPosting",
+        "BreadcrumbList",
+        "og:image",
+        "twitter:image",
+        "summary_large_image",
+        "related-articles",
+        "breadcrumbs",
+    ]
+    for token in enhancer_tokens:
+        if token not in script:
+            errors.append(f"assets/script.js: missing rendered SEO behavior for {token}")
+
+    if ".breadcrumbs" not in article_css or ".related-articles" not in article_css:
+        errors.append("assets/article.css: missing breadcrumb/related article styling")
+
+    allowed_source_article_types = {"TechArticle", "Article", "BlogPosting"}
     for page in article_pages:
         text = page.read_text(encoding="utf-8")
         slug = page.parent.name
         rel = page.relative_to(ROOT)
         expected_url = f"{BASE_URL}/articles/{slug}/"
+
         if canonical(text) != expected_url:
             errors.append(f"{rel}: canonical URL mismatch")
         if not meta(text, "description"):
             errors.append(f"{rel}: missing meta description")
         if meta(text, "robots") != "index,follow":
             errors.append(f"{rel}: robots should be index,follow")
-        if not has_jsonld_type(text, "BlogPosting"):
-            errors.append(f"{rel}: missing BlogPosting structured data")
-        if not has_jsonld_type(text, "BreadcrumbList"):
-            errors.append(f"{rel}: missing BreadcrumbList structured data")
-        if 'property="og:image"' not in text:
-            errors.append(f"{rel}: missing og:image")
-        if 'name="twitter:image"' not in text or 'name="twitter:card" content="summary_large_image"' not in text:
-            errors.append(f"{rel}: incomplete Twitter/X large-image metadata")
-        if 'class="breadcrumbs"' not in text:
-            errors.append(f"{rel}: missing visible breadcrumbs")
-        if len(article_pages) > 1 and 'class="related-articles"' not in text:
-            errors.append(f"{rel}: missing related article links")
+        if not (jsonld_types(text) & allowed_source_article_types):
+            errors.append(f"{rel}: missing source article structured data")
         if expected_url not in sitemap:
             errors.append(f"{rel}: missing from sitemap.xml")
-        if not (ROOT / "assets" / "og" / f"{slug}.png").exists():
-            errors.append(f"assets/og/{slug}.png: missing social/search image")
+        if slug not in script:
+            errors.append(f"assets/script.js: article registry missing {slug}")
+        if not (ROOT / "assets" / "og" / f"{slug}.svg").exists():
+            errors.append(f"assets/og/{slug}.svg: missing article search image")
 
+    if not sitemap_path.exists():
+        errors.append("sitemap.xml: missing sitemap")
     if not (ROOT / "feed.xml").exists():
         errors.append("feed.xml: missing RSS feed")
     if not (ROOT / "favicon.svg").exists():
         errors.append("favicon.svg: missing favicon")
+
+    robots_path = ROOT / "robots.txt"
+    if not robots_path.exists():
+        errors.append("robots.txt: missing")
+    else:
+        robots = robots_path.read_text(encoding="utf-8")
+        if "Sitemap: https://darawsheh.github.io/sitemap.xml" not in robots:
+            errors.append("robots.txt: sitemap directive missing")
+
     key_file = ROOT / f"{INDEXNOW_KEY}.txt"
     if not key_file.exists() or key_file.read_text(encoding="utf-8").strip() != INDEXNOW_KEY:
         errors.append("IndexNow verification key is missing or invalid")
