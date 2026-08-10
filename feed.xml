@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Islam Darawsheh Articles</title>
+    <link>https://darawsheh.github.io/articles/</link>
+    <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
+    <language>en</language>
+    <item>
+      <title>Stop Exposing EF Core Entities from Your .NET 10 APIs</title>
+      <link>https://darawsheh.github.io/articles/ef-core-entities-not-api-contracts/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/ef-core-entities-not-api-contracts/</guid>
+      <pubDate>Mon, 10 Aug 2026 00:00:00 GMT</pubDate>
+      <description>A production-minded .NET 10 guide to separating EF Core entities from HTTP API contracts using explicit request/response models, projections, TypedResults, and ProblemDetails.</description>
+    </item>
+    <item>
+      <title>Clean Architecture in .NET 10: Stop Adding Layers, Start Protecting Decisions</title>
+      <link>https://darawsheh.github.io/articles/clean-architecture-dotnet-10-without-ceremony/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/clean-architecture-dotnet-10-without-ceremony/</guid>
+      <pubDate>Fri, 07 Aug 2026 00:00:00 GMT</pubDate>
+      <description>A production-minded .NET 10 walkthrough of Clean Architecture using UUIDv7, strong domain types, authoritative pricing, EF Core boundaries, Minimal APIs, and focused tests without unnecessary ceremony.</description>
+    </item>
+    <item>
+      <title>Clean Architecture vs. DDD Is Usually the Wrong Question</title>
+      <link>https://darawsheh.github.io/articles/clean-architecture-vs-ddd/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/clean-architecture-vs-ddd/</guid>
+      <pubDate>Thu, 06 Aug 2026 00:00:00 GMT</pubDate>
+      <description>Clean Architecture and Domain-Driven Design are not competing alternatives. One governs dependency direction; the other helps teams model complex business domains.</description>
+    </item>
+  </channel>
+</rss>
