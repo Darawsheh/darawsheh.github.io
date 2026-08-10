@@ -7,6 +7,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = "https://darawsheh.github.io"
+PROFILE_URL = f"{BASE_URL}/islam-darawsheh/"
+PROFILE_PERSON_ID = f"{PROFILE_URL}#person"
 INDEXNOW_KEY = "a89b01a4784870dc7fd5375a3d755561"
 
 
@@ -39,6 +41,7 @@ def main() -> int:
     article_css = (ROOT / "assets" / "article.css").read_text(encoding="utf-8")
 
     home_path = ROOT / "index.html"
+    profile_path = ROOT / "islam-darawsheh" / "index.html"
     article_index_path = ROOT / "articles" / "index.html"
     article_pages = sorted((ROOT / "articles").glob("*/index.html"))
 
@@ -51,12 +54,35 @@ def main() -> int:
         errors.append("index.html: missing RSS discovery link")
     if meta(home, "robots") != "index,follow":
         errors.append("index.html: robots should be index,follow")
+    if PROFILE_URL not in home or PROFILE_PERSON_ID not in home:
+        errors.append("index.html: missing canonical author-profile entity references")
+    if "<h1>Islam Darawsheh</h1>" not in home:
+        errors.append("index.html: primary H1 should identify Islam Darawsheh")
+
+    if not profile_path.exists():
+        errors.append("islam-darawsheh/index.html: missing author profile page")
+    else:
+        profile = profile_path.read_text(encoding="utf-8")
+        if canonical(profile) != PROFILE_URL:
+            errors.append("islam-darawsheh/index.html: canonical URL mismatch")
+        if meta(profile, "robots") != "index,follow":
+            errors.append("islam-darawsheh/index.html: robots should be index,follow")
+        if not has_jsonld_type(profile, "ProfilePage"):
+            errors.append("islam-darawsheh/index.html: missing ProfilePage structured data")
+        if PROFILE_PERSON_ID not in profile:
+            errors.append("islam-darawsheh/index.html: missing stable Person @id")
+        if "https://github.com/Darawsheh" not in profile or "https://www.linkedin.com/in/darawsheh/" not in profile:
+            errors.append("islam-darawsheh/index.html: missing public sameAs profiles")
+        if PROFILE_URL not in sitemap:
+            errors.append("islam-darawsheh/index.html: missing from sitemap.xml")
 
     article_index = article_index_path.read_text(encoding="utf-8")
     if not has_jsonld_type(article_index, "Blog"):
         errors.append("articles/index.html: missing Blog structured data")
     if 'rel="alternate" type="application/rss+xml"' not in article_index:
         errors.append("articles/index.html: missing RSS discovery link")
+    if PROFILE_URL not in article_index or PROFILE_PERSON_ID not in article_index:
+        errors.append("articles/index.html: blog author is not linked to the profile entity")
 
     enhancer_tokens = [
         "BlogPosting",
@@ -121,7 +147,7 @@ def main() -> int:
             print(f" - {error}", file=sys.stderr)
         return 1
 
-    print(f"SEO validation passed for {len(article_pages)} article(s).")
+    print(f"SEO validation passed for profile plus {len(article_pages)} article(s).")
     return 0
 
 
