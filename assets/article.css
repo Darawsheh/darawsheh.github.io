@@ -172,6 +172,62 @@ blockquote {
   font-weight: 700;
 }
 
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .45rem;
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.breadcrumbs a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover,
+.breadcrumbs a:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.related-articles {
+  max-width: 780px;
+  margin-inline: auto;
+  padding-block: clamp(3rem, 7vw, 5rem);
+  border-top: 1px solid var(--border);
+}
+
+.related-articles h2 {
+  margin-bottom: 1rem;
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+}
+
+.related-articles ul {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.related-articles li {
+  display: grid;
+  gap: .35rem;
+  padding: 1rem 0;
+}
+
+.related-articles li > a {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.related-articles li > span {
+  color: var(--muted);
+}
+
 .comments {
   max-width: 780px;
   margin-inline: auto;
