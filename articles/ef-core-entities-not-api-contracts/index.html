@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stop Exposing EF Core Entities from Your .NET 10 APIs | Islam Darawsheh</title>
+  <meta name="description" content="A production-minded .NET 10 guide to separating EF Core entities from HTTP API contracts using explicit request/response models, projections, TypedResults, and ProblemDetails.">
+  <meta name="author" content="Islam Darawsheh">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#111827">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <link rel="canonical" href="https://darawsheh.github.io/articles/ef-core-entities-not-api-contracts/">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/article.css">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Stop Exposing EF Core Entities from Your .NET 10 APIs">
+  <meta property="og:description" content="Your persistence model, request model, and response contract solve different problems. Treat them that way.">
+  <meta property="og:url" content="https://darawsheh.github.io/articles/ef-core-entities-not-api-contracts/">
+  <meta property="article:published_time" content="2026-08-10">
+  <meta property="article:author" content="Islam Darawsheh">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Stop Exposing EF Core Entities from Your .NET 10 APIs">
+  <meta name="twitter:description" content="Explicit API contracts, EF Core projections, TypedResults, ProblemDetails, and fewer accidental coupling points.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Stop Exposing EF Core Entities from Your .NET 10 APIs",
+    "description": "A production-minded .NET 10 guide to separating EF Core entities from HTTP API contracts using explicit request/response models, projections, TypedResults, and ProblemDetails.",
+    "datePublished": "2026-08-10",
+    "dateModified": "2026-08-10",
+    "author": {
+      "@type": "Person",
+      "name": "Islam Darawsheh",
+      "url": "https://darawsheh.github.io/"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Islam Darawsheh"
+    },
+    "mainEntityOfPage": "https://darawsheh.github.io/articles/ef-core-entities-not-api-contracts/",
+    "keywords": [
+      ".NET 10",
+      "ASP.NET Core",
+      "EF Core",
+      "Web API",
+      "DTO",
+      "API Contracts",
+      "Minimal APIs",
+      "TypedResults",
+      "ProblemDetails"
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to article</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/#expertise">Expertise</a>
+        <a href="/articles/">Articles</a>
+        <a href="/#contact">Connect</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="article shell">
+      <header class="article-header">
+        <p class="eyebrow">.NET 10 · ASP.NET Core · EF Core</p>
+        <h1>Stop Exposing EF Core Entities from Your .NET 10 APIs</h1>
+        <p class="article-deck">Your persistence model, request model, and public response contract solve different problems. Reusing one type for all three saves a few lines today and creates coupling, security risk, and versioning friction tomorrow.</p>
+        <div class="article-meta">
+          <span>By Islam Darawsheh</span>
+          <time datetime="2026-08-10">August 10, 2026</time>
+          <span>12 min read</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+        <p class="lead">One of the easiest ASP.NET Core APIs to build is also one of the easiest to regret: query an EF Core entity, return it directly, and let JSON serialization define the contract.</p>
+
+        <p>It feels efficient. There is no mapping code, no response model, and no apparent duplication. But the shortcut quietly makes your database-facing model part of your public HTTP surface.</p>
+
+        <aside class="callout">
+          <strong>The principle for this article:</strong>
+          <p>An EF Core entity is a persistence/domain concern. An HTTP request is client input. An HTTP response is a public contract. They can share concepts without sharing the same type.</p>
+        </aside>
+
+        <h2>The convenient endpoint that creates the problem</h2>
+
+        <p>Imagine an order entity that contains everything the application needs internally:</p>
+
+        <pre><code>public sealed class Order
+{
+    public Guid Id { get; set; }
+    public string Number { get; set; } = string.Empty;
+    public OrderStatus Status { get; set; }
+    public decimal TotalAmount { get; set; }
+    public string Currency { get; set; } = string.Empty;
+
+    public string? InternalRiskNote { get; set; }
+    public byte[] RowVersion { get; set; } = [];
+
+    public List&lt;OrderItem&gt; Items { get; set; } = [];
+}</code></pre>
+
+        <p>Then the API returns it directly:</p>
+
+        <pre><code>static async Task&lt;Results&lt;Ok&lt;Order&gt;, NotFound&gt;&gt; GetOrder(
+    Guid id,
+    OrderingDbContext db,
+    CancellationToken cancellationToken)
+{
+    var order = await db.Orders
+        .Include(x =&gt; x.Items)
+        .SingleOrDefaultAsync(
+            x =&gt; x.Id == id,
+            cancellationToken);
+
+    return order is null
+        ? TypedResults.NotFound()
+        : TypedResults.Ok(order);
+}</code></pre>
+
+        <p>The endpoint compiles, and the response is strongly typed. The problem is not syntax. The problem is that <code>Order</code> now has two owners: EF Core and external clients.</p>
+
+        <p>Add <code>InternalRiskNote</code> for an operations workflow and it may suddenly appear in JSON. Add a concurrency token and it becomes part of the wire shape. Add a navigation property and you can change payload size, serialization behavior, and generated OpenAPI without intentionally changing the API.</p>
+
+        <h2>Persistence shape is not contract shape</h2>
+
+        <p>EF Core entities are designed around persistence, relationships, change tracking, invariants, and database mapping. API contracts are designed around what a caller is allowed to send or needs to receive.</p>
+
+        <p>Those goals overlap sometimes, but not enough to make the types interchangeable.</p>
+
+        <div class="comparison-grid" aria-label="Entity and API contract responsibilities">
+          <section>
+            <h3>EF Core entity</h3>
+            <p>Persistence identity, relationships, concurrency, domain state, database mapping.</p>
+          </section>
+          <section>
+            <h3>Request contract</h3>
+            <p>Only data the caller is allowed to provide for a specific operation.</p>
+          </section>
+          <section>
+            <h3>Response contract</h3>
+            <p>Stable, intentional data the API promises to return.</p>
+          </section>
+          <section>
+            <h3>Application model</h3>
+            <p>Data needed to execute a use case, independent of transport details.</p>
+          </section>
+        </div>
+
+        <p>Microsoft's .NET architecture guidance makes the same distinction from another direction: commands are DTO-like messages that contain exactly the information needed to perform an operation, not the entire domain object.</p>
+
+        <h2>Input models are a security boundary</h2>
+
+        <p>The output-side problem is accidental exposure. The input-side problem is often worse: overposting.</p>
+
+        <p>This is the kind of update endpoint I do not want:</p>
+
+        <pre><code>app.MapPut(
+    "/orders/{id:guid}",
+    async (
+        Guid id,
+        Order request,
+        OrderingDbContext db,
+        CancellationToken cancellationToken) =&gt;
+    {
+        if (id != request.Id)
+            return Results.BadRequest();
+
+        db.Orders.Update(request);
+        await db.SaveChangesAsync(cancellationToken);
+
+        return Results.NoContent();
+    });</code></pre>
+
+        <p>The caller is now posting an <code>Order</code>, which contains fields such as status, totals, internal notes, and concurrency data. Even if validation currently prevents some bad states, the contract communicates the wrong authority: it suggests the client may submit the persistence model.</p>
+
+        <p>Microsoft's ASP.NET Core model-binding guidance explicitly recommends dedicated view/input models as the protection mechanism for overposting rather than relying on broad entity binding.</p>
+
+        <p>A focused request says what the caller is actually allowed to change:</p>
+
+        <pre><code>public sealed record ChangeShippingAddressRequest(
+    string AddressLine1,
+    string City,
+    string CountryCode);</code></pre>
+
+        <p>That type is not duplication. It is an allow-list expressed in code.</p>
+
+        <h2>Name contracts by intent, not by habit</h2>
+
+        <p>I avoid a generic type named <code>OrderDto</code> when the same concept crosses the API in different directions. The name hides an important design question: DTO for what?</p>
+
+        <pre><code>public sealed record CreateOrderRequest(
+    Guid CustomerId,
+    IReadOnlyList&lt;CreateOrderLineRequest&gt; Items);
+
+public sealed record OrderResponse(
+    Guid Id,
+    string Number,
+    OrderStatus Status,
+    decimal TotalAmount,
+    string Currency,
+    IReadOnlyList&lt;OrderItemResponse&gt; Items);
+
+public sealed record OrderItemResponse(
+    Guid ProductId,
+    string ProductName,
+    int Quantity,
+    decimal UnitPrice);</code></pre>
+
+        <p><code>CreateOrderRequest</code> describes an operation. <code>OrderResponse</code> describes a representation. They can evolve independently because they are different contracts.</p>
+
+        <aside class="callout">
+          <strong>Design choice:</strong>
+          <p>I prefer explicit request/response names over one reusable <code>*Dto</code> type. That is a design preference, not a Microsoft API requirement. The important requirement is keeping authority and contract shape explicit.</p>
+        </aside>
+
+        <h2>Project directly to the response contract</h2>
+
+        <p>Once response types are explicit, EF Core can project directly into them instead of materializing a full entity graph first.</p>
+
+        <pre><code>static async Task&lt;Results&lt;Ok&lt;OrderResponse&gt;, NotFound&gt;&gt; GetOrder(
+    Guid id,
+    OrderingDbContext db,
+    CancellationToken cancellationToken)
+{
+    var response = await db.Orders
+        .Where(x =&gt; x.Id == id)
+        .Select(x =&gt; new OrderResponse(
+            x.Id,
+            x.Number,
+            x.Status,
+            x.TotalAmount,
+            x.Currency,
+            x.Items
+                .OrderBy(item =&gt; item.Id)
+                .Select(item =&gt; new OrderItemResponse(
+                    item.ProductId,
+                    item.ProductName,
+                    item.Quantity,
+                    item.UnitPrice))
+                .ToList()))
+        .SingleOrDefaultAsync(cancellationToken);
+
+    return response is null
+        ? TypedResults.NotFound()
+        : TypedResults.Ok(response);
+}</code></pre>
+
+        <p>This does more than prevent data leakage. EF Core's performance guidance recommends projecting only the properties a query actually needs. A projection allows the provider to select the required columns instead of loading an entire entity merely to discard fields during mapping.</p>
+
+        <h2>A useful EF Core nuance: AsNoTracking is not a ritual</h2>
+
+        <p>You may notice that the projection above does not call <code>AsNoTracking()</code>. That is intentional.</p>
+
+        <p>EF Core tracks entity instances by default, and <code>AsNoTracking()</code> is useful for read-only queries that return entities. But Microsoft's tracking documentation also states that when a projection contains no entity instances, there is nothing for the context to track.</p>
+
+        <p>Because <code>OrderResponse</code> and <code>OrderItemResponse</code> are plain contract types, the query above does not materialize <code>Order</code> or <code>OrderItem</code> entities into the result.</p>
+
+        <pre><code>// Useful when the result is an entity:
+var order = await db.Orders
+    .AsNoTracking()
+    .SingleOrDefaultAsync(
+        x =&gt; x.Id == id,
+        cancellationToken);
+
+// Not required just for ceremony when the result
+// contains no entity instances:
+var response = await db.Orders
+    .Where(x =&gt; x.Id == id)
+    .Select(x =&gt; new OrderSummaryResponse(
+        x.Id,
+        x.Number,
+        x.TotalAmount))
+    .SingleOrDefaultAsync(cancellationToken);</code></pre>
+
+        <p>The larger rule is more useful than memorizing one method call: understand what EF Core is materializing and whether those instances need change tracking.</p>
+
+        <h2>TypedResults make the contract visible to code and OpenAPI</h2>
+
+        <p>For Minimal APIs, Microsoft documents <code>TypedResults</code> as the strongly typed alternative to <code>Results</code>. The concrete result types improve testability and provide response metadata that can describe the endpoint to OpenAPI.</p>
+
+        <pre><code>static async Task&lt;Results&lt;Ok&lt;OrderResponse&gt;, NotFound&gt;&gt; GetOrder(
+    Guid id,
+    OrderingDbContext db,
+    CancellationToken cancellationToken)
+{
+    var response = await LoadOrderResponse(
+        id,
+        db,
+        cancellationToken);
+
+    return response is null
+        ? TypedResults.NotFound()
+        : TypedResults.Ok(response);
+}</code></pre>
+
+        <p>That method signature is useful documentation by itself: a successful response contains <code>OrderResponse</code>; the other declared outcome is <code>404 Not Found</code>.</p>
+
+        <p>Using a typed result does not fix a bad model, though. <code>Ok&lt;Order&gt;</code> is still a strongly typed leak. The important decision is the type inside the result.</p>
+
+        <h2>Errors are contracts too</h2>
+
+        <p>Do not carefully design successful responses and then return random anonymous error objects from each endpoint.</p>
+
+        <p>ASP.NET Core provides <code>ProblemDetails</code> support for machine-readable HTTP API errors. In .NET 10, the default problem-details service can be registered with <code>AddProblemDetails()</code>.</p>
+
+        <pre><code>var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddProblemDetails();
+
+var app = builder.Build();
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();</code></pre>
+
+        <p>For an explicit business conflict, a Minimal API can return a typed problem result:</p>
+
+        <pre><code>static Results&lt;NoContent, ProblemHttpResult&gt; RejectIfLocked(
+    Order order)
+{
+    if (!order.IsLocked)
+        return TypedResults.NoContent();
+
+    return TypedResults.Problem(
+        statusCode: StatusCodes.Status409Conflict,
+        title: "Order is locked",
+        detail: "The shipping address can no longer be changed.");
+}</code></pre>
+
+        <p>Microsoft's error-handling guidance also carries an important security warning: do not send sensitive exception details to clients. A consistent error contract is not an excuse to serialize internal failures.</p>
+
+        <h2>Do not map after loading more than you need</h2>
+
+        <p>A response model alone does not guarantee an efficient query. This still loads the entity graph first:</p>
+
+        <pre><code>var order = await db.Orders
+    .Include(x =&gt; x.Items)
+    .SingleAsync(x =&gt; x.Id == id, cancellationToken);
+
+var response = new OrderResponse(
+    order.Id,
+    order.Number,
+    order.Status,
+    order.TotalAmount,
+    order.Currency,
+    order.Items
+        .Select(item =&gt; new OrderItemResponse(
+            item.ProductId,
+            item.ProductName,
+            item.Quantity,
+            item.UnitPrice))
+        .ToList());</code></pre>
+
+        <p>That can be correct when the domain entity itself is required for behavior. But for a read-only query whose final purpose is an API representation, direct projection usually communicates intent better and can reduce transferred data.</p>
+
+        <p>This is where I prefer manual LINQ projection for important API queries. A mapping library can be useful when it meaningfully reduces repetitive mapping, but it should not hide the database query shape or turn contract design into convention magic.</p>
+
+        <h2>Separate read contracts from write models</h2>
+
+        <p>There is another architectural benefit: read and write paths stop fighting over the same object shape.</p>
+
+        <p>A write use case may need:</p>
+
+        <ul>
+          <li>A customer identifier.</li>
+          <li>Product identifiers and quantities.</li>
+          <li>A concurrency token.</li>
+          <li>No product description at all.</li>
+        </ul>
+
+        <p>A read response may need:</p>
+
+        <ul>
+          <li>Formatted product names.</li>
+          <li>Calculated totals.</li>
+          <li>Display status.</li>
+          <li>Links or presentation-friendly values.</li>
+        </ul>
+
+        <p>Trying to make one entity satisfy persistence, commands, queries, and public JSON usually produces a type that is convenient for none of them.</p>
+
+        <h2>Contract stability becomes intentional</h2>
+
+        <p>Once the API returns explicit contracts, internal changes stop becoming accidental API changes.</p>
+
+        <div class="decision-list">
+          <section>
+            <h3>Add an internal field</h3>
+            <p>It stays internal until you deliberately add it to a response contract.</p>
+          </section>
+          <section>
+            <h3>Rename a database column</h3>
+            <p>The public JSON name does not need to change with persistence mapping.</p>
+          </section>
+          <section>
+            <h3>Split an entity</h3>
+            <p>The API can preserve one response shape while persistence evolves underneath.</p>
+          </section>
+          <section>
+            <h3>Version a public field</h3>
+            <p>The change is visible in a contract diff rather than hidden inside an entity refactor.</p>
+          </section>
+        </div>
+
+        <p>This is not about creating a DTO for every class in the solution. It is about treating a public boundary as something you design rather than something serialization discovers.</p>
+
+        <h2>What I would standardize on a .NET 10 API</h2>
+
+        <ul>
+          <li>Dedicated request types per operation.</li>
+          <li>Dedicated response types per public representation.</li>
+          <li>Direct EF Core projection for read-only API queries.</li>
+          <li><code>TypedResults</code> where their type metadata adds value.</li>
+          <li><code>ProblemDetails</code> for consistent HTTP error contracts.</li>
+          <li>Domain/entities kept free to evolve for internal needs.</li>
+          <li>Contract tests around important public response shapes.</li>
+        </ul>
+
+        <h2>What I would not standardize</h2>
+
+        <ul>
+          <li>A mandatory <code>*Dto</code> for every internal type.</li>
+          <li><code>AsNoTracking()</code> added blindly to every projection.</li>
+          <li>AutoMapper merely to avoid three explicit assignments.</li>
+          <li>EF entities annotated until they double as API schemas.</li>
+          <li>One request/response model reused across unrelated operations.</li>
+        </ul>
+
+        <blockquote>
+          The goal is not more models. The goal is fewer accidental contracts.
+        </blockquote>
+
+        <p>An EF Core entity can be a good domain or persistence model and still be the wrong HTTP model. In a maintainable .NET API, that is not duplication to eliminate. It is a boundary worth keeping explicit.</p>
+
+        <h2>References</h2>
+
+        <p>This article follows the site's primary-source-first editorial rule. The main technical references are Microsoft documentation:</p>
+
+        <ul>
+          <li><a href="https://learn.microsoft.com/en-us/aspnet/core/fundamentals/apis?view=aspnetcore-10.0">Microsoft Learn — ASP.NET Core APIs overview (.NET 10)</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses?view=aspnetcore-10.0">Microsoft Learn — Minimal API responses and TypedResults (.NET 10)</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding?view=aspnetcore-10.0">Microsoft Learn — ASP.NET Core model binding and overposting guidance</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/ef/core/performance/efficient-querying">Microsoft Learn — EF Core efficient querying and projection</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/ef/core/querying/tracking">Microsoft Learn — EF Core tracking and no-tracking queries</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/aspnet/core/fundamentals/error-handling?view=aspnetcore-10.0">Microsoft Learn — ASP.NET Core error handling and ProblemDetails</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/microservice-application-layer-implementation-web-api">Microsoft .NET Architecture Guide — Web API application layer and DTO-style commands</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/">Microsoft Framework Design Guidelines</a></li>
+        </ul>
+      </div>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p class="comments-intro">Where do you draw the line between persistence entities, domain models, and public API contracts?</p>
+        <script src="https://giscus.app/client.js"
+                data-repo="Darawsheh/darawsheh.github.io"
+                data-repo-id="R_kgDOTv89MQ"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOTv89Mc4DC0Gm"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
+      </section>
+
+      <footer class="article-footer">
+        <div>
+          <p class="eyebrow">About the author</p>
+          <h2>Islam Darawsheh</h2>
+          <p>Software Architect and Technical Lead focused on enterprise .NET, secure systems, SaaS platforms, integration-heavy solutions, and maintainable software delivery.</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/articles/">More articles</a>
+          <a class="button" href="https://www.linkedin.com/in/darawsheh/">LinkedIn</a>
+        </div>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div>
+  </footer>
+  <script src="../../assets/script.js" defer></script>
+  <!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"c49bf167d60b425c9686b4c56244eae8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

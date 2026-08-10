@@ -2,11 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://darawsheh.github.io/</loc>
-    <lastmod>2026-08-07</lastmod>
+    <lastmod>2026-08-10</lastmod>
   </url>
   <url>
     <loc>https://darawsheh.github.io/articles/</loc>
-    <lastmod>2026-08-07</lastmod>
+    <lastmod>2026-08-10</lastmod>
+  </url>
+  <url>
+    <loc>https://darawsheh.github.io/articles/ef-core-entities-not-api-contracts/</loc>
+    <lastmod>2026-08-10</lastmod>
   </url>
   <url>
     <loc>https://darawsheh.github.io/articles/clean-architecture-dotnet-10-without-ceremony/</loc>
