@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import json
 import re
 import sys
 from pathlib import Path
@@ -9,20 +8,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = "https://darawsheh.github.io"
 INDEXNOW_KEY = "a89b01a4784870dc7fd5375a3d755561"
-JSONLD_RE = re.compile(r'<script\s+type="application/ld\+json">\s*(\{.*?\})\s*</script>', re.DOTALL)
 
 
-def jsonld_types(text: str) -> set[str]:
-    result: set[str] = set()
-    for match in JSONLD_RE.finditer(text):
-        try:
-            data = json.loads(match.group(1))
-        except json.JSONDecodeError:
-            continue
-        value = data.get("@type")
-        if isinstance(value, str):
-            result.add(value)
-    return result
+def has_jsonld_type(text: str, expected: str) -> bool:
+    """Check for a JSON-LD @type without trying to parse nested script objects."""
+    return bool(
+        re.search(
+            rf'<script\s+type="application/ld\+json">.*?"@type"\s*:\s*"{re.escape(expected)}".*?</script>',
+            text,
+            re.DOTALL | re.IGNORECASE,
+        )
+    )
 
 
 def meta(text: str, key: str, attr: str = "name") -> str | None:
@@ -47,7 +43,7 @@ def main() -> int:
     article_pages = sorted((ROOT / "articles").glob("*/index.html"))
 
     home = home_path.read_text(encoding="utf-8")
-    if "WebSite" not in jsonld_types(home):
+    if not has_jsonld_type(home, "WebSite"):
         errors.append("index.html: missing WebSite structured data")
     if 'rel="icon" href="/favicon.svg"' not in home:
         errors.append("index.html: missing favicon link")
@@ -57,7 +53,7 @@ def main() -> int:
         errors.append("index.html: robots should be index,follow")
 
     article_index = article_index_path.read_text(encoding="utf-8")
-    if "Blog" not in jsonld_types(article_index):
+    if not has_jsonld_type(article_index, "Blog"):
         errors.append("articles/index.html: missing Blog structured data")
     if 'rel="alternate" type="application/rss+xml"' not in article_index:
         errors.append("articles/index.html: missing RSS discovery link")
@@ -78,7 +74,7 @@ def main() -> int:
     if ".breadcrumbs" not in article_css or ".related-articles" not in article_css:
         errors.append("assets/article.css: missing breadcrumb/related article styling")
 
-    allowed_source_article_types = {"TechArticle", "Article", "BlogPosting"}
+    allowed_source_article_types = ("TechArticle", "Article", "BlogPosting")
     for page in article_pages:
         text = page.read_text(encoding="utf-8")
         slug = page.parent.name
@@ -91,7 +87,7 @@ def main() -> int:
             errors.append(f"{rel}: missing meta description")
         if meta(text, "robots") != "index,follow":
             errors.append(f"{rel}: robots should be index,follow")
-        if not (jsonld_types(text) & allowed_source_article_types):
+        if not any(has_jsonld_type(text, item_type) for item_type in allowed_source_article_types):
             errors.append(f"{rel}: missing source article structured data")
         if expected_url not in sitemap:
             errors.append(f"{rel}: missing from sitemap.xml")
