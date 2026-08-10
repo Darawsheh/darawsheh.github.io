@@ -57,6 +57,8 @@
 
   const canonicalUrl = `https://darawsheh.github.io/articles/${slug}/`;
   const imageUrl = `https://darawsheh.github.io/assets/og/${slug}.svg`;
+  const authorProfileUrl = 'https://darawsheh.github.io/islam-darawsheh/';
+  const authorPersonId = `${authorProfileUrl}#person`;
 
   const ensureMeta = (selector, attributes) => {
     let node = document.head.querySelector(selector);
@@ -115,6 +117,16 @@
       if (['TechArticle', 'Article', 'BlogPosting'].includes(data['@type'])) {
         data['@type'] = 'BlogPosting';
         data.image = [imageUrl];
+        data.author = {
+          '@id': authorPersonId,
+          '@type': 'Person',
+          name: 'Islam Darawsheh',
+          url: authorProfileUrl,
+          sameAs: [
+            'https://github.com/Darawsheh',
+            'https://www.linkedin.com/in/darawsheh/'
+          ]
+        };
         data.isPartOf = {
           '@type': 'Blog',
           '@id': 'https://darawsheh.github.io/articles/',
@@ -228,5 +240,14 @@
       const footer = article.querySelector('.article-footer');
       article.insertBefore(section, comments || footer || null);
     }
+  }
+
+  const footerActions = article?.querySelector('.article-footer .actions');
+  if (footerActions && !footerActions.querySelector('a[href="/islam-darawsheh/"]')) {
+    const profileLink = document.createElement('a');
+    profileLink.className = 'button';
+    profileLink.href = '/islam-darawsheh/';
+    profileLink.textContent = 'Author profile';
+    footerActions.prepend(profileLink);
   }
 })();
