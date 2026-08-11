@@ -6,7 +6,7 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
-      <title>Pagination in EF Core: Page Numbers vs. Cursors Is a Product Decision</title>
+      <title>Your EF Core Pagination Is Slower Than You Think—Skip/Take Is Only Part of the Story</title>
       <link>https://darawsheh.github.io/articles/ef-core-pagination-page-numbers-vs-cursors/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/ef-core-pagination-page-numbers-vs-cursors/</guid>
       <pubDate>Tue, 11 Aug 2026 00:00:00 GMT</pubDate>
