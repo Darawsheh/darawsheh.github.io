@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>Pagination in EF Core: Page Numbers vs. Cursors Is a Product Decision</title>
+      <link>https://darawsheh.github.io/articles/ef-core-pagination-page-numbers-vs-cursors/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/ef-core-pagination-page-numbers-vs-cursors/</guid>
+      <pubDate>Tue, 11 Aug 2026 00:00:00 GMT</pubDate>
+      <description>A practical .NET 10 and EF Core guide to choosing offset or keyset pagination based on UI requirements, total counts, deterministic ordering, indexes, and database-provider behavior.</description>
+    </item>
+    <item>
       <title>Stop Exposing EF Core Entities from Your .NET 10 APIs</title>
       <link>https://darawsheh.github.io/articles/ef-core-entities-not-api-contracts/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/ef-core-entities-not-api-contracts/</guid>
