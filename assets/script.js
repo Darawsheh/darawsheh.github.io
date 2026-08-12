@@ -29,6 +29,12 @@
 
   const articles = [
     {
+      slug: 'ef-core-pagination-page-numbers-vs-cursors',
+      title: 'Your EF Core Pagination Is Slower Than You Think—Skip/Take Is Only Part of the Story',
+      description: 'Offset pagination, exact page counts, keyset pagination, stable ordering, indexes, and the database work hidden behind a simple UI choice.',
+      published: '2026-08-11'
+    },
+    {
       slug: 'ef-core-entities-not-api-contracts',
       title: 'Stop Exposing EF Core Entities from Your .NET 10 APIs',
       description: 'Explicit API contracts, EF Core projections, TypedResults, ProblemDetails, and fewer accidental coupling points.',
