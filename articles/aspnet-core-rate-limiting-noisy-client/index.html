@@ -313,10 +313,11 @@ builder.Services.AddRateLimiter(options =&gt;
                     "premium",
                     StringComparison.OrdinalIgnoreCase);
 
+                var tier = isPremium ? "premium" : "standard";
                 var permitLimit = isPremium ? 1_000 : 100;
 
                 return RateLimitPartition.GetFixedWindowLimiter(
-                    partitionKey: $"client:{clientId}",
+                    partitionKey: $"client:{clientId}:{tier}",
                     factory: _ =&gt; new FixedWindowRateLimiterOptions
                     {
                         PermitLimit = permitLimit,
@@ -365,6 +366,8 @@ per-client request-rate bucket
 endpoint-specific resource protection
         ↓
 explicit rejection contract</code></pre>
+
+        <p>There is a subtle reason the example includes the tier in the partition key. <code>PartitionedRateLimiter.Create</code> reuses a cached limiter when the partition key matches an existing entry. If a client's limit can change from standard to premium while the application is running, a key containing only <code>clientId</code> can keep reusing the previously created limiter. In a real system, make policy changes deliberate—for example by including a trusted tier or policy version in the key, or by using another strategy that replaces the intended limiter state. A policy-key change also starts a new bucket, so that reset should be an explicit product decision.</p>
 
         <p>Also notice that the concurrency policy is shared for the export endpoint. That is deliberate: the resource we are protecting there is not one customer's fairness allowance; it is the application's ability to run only a small number of expensive exports at once.</p>
 
@@ -667,6 +670,7 @@ application work</code></pre>
           <li><a href="https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit-samples?view=aspnetcore-10.0">Microsoft Learn — ASP.NET Core rate limiter samples</a></li>
           <li><a href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.ratelimiting.ratelimiteroptions.rejectionstatuscode?view=aspnetcore-10.0">Microsoft Learn — RateLimiterOptions.RejectionStatusCode</a></li>
           <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.threading.ratelimiting.partitionedratelimiter?view=aspnetcore-10.0">Microsoft Learn — PartitionedRateLimiter</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.threading.ratelimiting.partitionedratelimiter.create?view=aspnetcore-10.0">Microsoft Learn — PartitionedRateLimiter.Create caching behavior</a></li>
           <li><a href="https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-10.0">Microsoft Learn — Proxy servers, load balancers, and forwarded headers</a></li>
           <li><a href="https://learn.microsoft.com/en-us/aspnet/core/breaking-changes/8/forwarded-headers-unknown-proxies?view=aspnetcore-10.0">Microsoft Learn — Forwarded headers from unknown proxies</a></li>
           <li><a href="https://github.com/dotnet/aspnetcore/issues/41861">dotnet/aspnetcore — Redis-backed distributed rate limiter proposal</a></li>
