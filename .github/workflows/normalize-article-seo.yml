@@ -26,7 +26,7 @@ jobs:
       - name: Normalize article SEO metadata
         run: python scripts/normalize_article_seo.py
 
-      - name: Commit normalized articles
+      - name: Commit normalized articles to PR branch
         shell: bash
         run: |
           if git diff --quiet -- articles; then
@@ -35,6 +35,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c automation/normalize-article-seo
           git add articles
           git commit -m "Normalize article SEO metadata"
-          git push
+          git push --set-upstream origin automation/normalize-article-seo
