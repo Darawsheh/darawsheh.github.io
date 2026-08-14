@@ -29,6 +29,12 @@
 
   const articles = [
     {
+      slug: 'aspnet-core-rate-limiting-noisy-client',
+      title: 'One Noisy Client Can Slow Everyone Down—Fix Your ASP.NET Core Rate Limiting',
+      description: 'A production-minded ASP.NET Core 10 guide to rate-limit partitions, authenticated client identity, reverse proxies, endpoint cost, 429 responses, queueing, and multi-instance deployment trade-offs.',
+      published: '2026-08-14'
+    },
+    {
       slug: 'ef-core-pagination-page-numbers-vs-cursors',
       title: 'Your EF Core Pagination Is Slower Than You Think—Skip/Take Is Only Part of the Story',
       description: 'Offset pagination, exact page counts, keyset pagination, stable ordering, indexes, and the database work hidden behind a simple UI choice.',
