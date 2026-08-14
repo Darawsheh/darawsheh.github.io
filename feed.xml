@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>One Noisy Client Can Slow Everyone Down—Fix Your ASP.NET Core Rate Limiting</title>
+      <link>https://darawsheh.github.io/articles/aspnet-core-rate-limiting-noisy-client/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/aspnet-core-rate-limiting-noisy-client/</guid>
+      <pubDate>Fri, 14 Aug 2026 00:00:00 GMT</pubDate>
+      <description>A production-minded ASP.NET Core 10 guide to rate-limit partitions, authenticated client identity, reverse proxies, endpoint cost, 429 responses, queueing, and multi-instance deployment trade-offs.</description>
+    </item>
+    <item>
       <title>Your EF Core Pagination Is Slower Than You Think—Skip/Take Is Only Part of the Story</title>
       <link>https://darawsheh.github.io/articles/ef-core-pagination-page-numbers-vs-cursors/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/ef-core-pagination-page-numbers-vs-cursors/</guid>
