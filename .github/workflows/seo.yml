@@ -27,6 +27,9 @@ jobs:
       - name: Validate crawl and SEO requirements
         run: python scripts/seo_validate.py
 
+      - name: Validate static article SEO metadata
+        run: python scripts/normalize_article_seo.py --check
+
       - name: Validate ProfilePage datetime values
         run: python scripts/seo_profile_datetime.py
 
