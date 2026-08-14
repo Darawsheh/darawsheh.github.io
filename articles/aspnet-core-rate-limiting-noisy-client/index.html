@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>One Noisy Client Can Slow Everyone Down—Fix Your ASP.NET Core Rate Limiting | Islam Darawsheh</title>
+  <meta name="description" content="A production-minded ASP.NET Core 10 guide to rate-limit partitions, authenticated client identity, reverse proxies, endpoint cost, 429 responses, queueing, and multi-instance deployment trade-offs.">
+  <meta name="author" content="Islam Darawsheh">
+  <meta name="robots" content="index,follow">
+  <meta name="keywords" content="ASP.NET Core 10, .NET 10, Rate Limiting, PartitionedRateLimiter, GlobalLimiter, Fixed Window, Token Bucket, Concurrency Limiter, API Protection, API Design, 429 Too Many Requests, Retry-After, Reverse Proxy, Distributed Rate Limiting">
+  <meta name="theme-color" content="#111827">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <link rel="canonical" href="https://darawsheh.github.io/articles/aspnet-core-rate-limiting-noisy-client/">
+  <link rel="alternate" type="application/rss+xml" title="Islam Darawsheh Articles" href="/feed.xml">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/article.css">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Islam Darawsheh">
+  <meta property="og:title" content="One Noisy Client Can Slow Everyone Down—Fix Your ASP.NET Core Rate Limiting">
+  <meta property="og:description" content="Rate limiting is not just a number. The partition key decides who competes for that number—and whether one client can affect everyone else.">
+  <meta property="og:url" content="https://darawsheh.github.io/articles/aspnet-core-rate-limiting-noisy-client/">
+  <meta property="article:published_time" content="2026-08-14">
+  <meta property="article:author" content="Islam Darawsheh">
+  <meta property="article:tag" content="ASP.NET Core 10">
+  <meta property="article:tag" content="Rate Limiting">
+  <meta property="article:tag" content="PartitionedRateLimiter">
+  <meta property="article:tag" content="API Design">
+  <meta property="article:tag" content="API Protection">
+  <meta property="article:tag" content="Reverse Proxy">
+  <meta property="article:tag" content="Distributed Systems">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="One Noisy Client Can Slow Everyone Down—Fix Your ASP.NET Core Rate Limiting">
+  <meta name="twitter:description" content="Partition by the right identity, protect expensive endpoints separately, define 429 behavior, and know when in-memory limits stop being cluster-wide guarantees.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "One Noisy Client Can Slow Everyone Down—Fix Your ASP.NET Core Rate Limiting",
+    "description": "A production-minded ASP.NET Core 10 guide to rate-limit partitions, authenticated client identity, reverse proxies, endpoint cost, 429 responses, queueing, and multi-instance deployment trade-offs.",
+    "datePublished": "2026-08-14",
+    "dateModified": "2026-08-14",
+    "author": {
+      "@id": "https://darawsheh.github.io/islam-darawsheh/#person",
+      "@type": "Person",
+      "name": "Islam Darawsheh",
+      "url": "https://darawsheh.github.io/islam-darawsheh/"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Islam Darawsheh"
+    },
+    "mainEntityOfPage": "https://darawsheh.github.io/articles/aspnet-core-rate-limiting-noisy-client/",
+    "keywords": [
+      "ASP.NET Core 10",
+      ".NET 10",
+      "Rate Limiting",
+      "PartitionedRateLimiter",
+      "GlobalLimiter",
+      "Fixed Window",
+      "Token Bucket",
+      "Concurrency Limiter",
+      "API Protection",
+      "429 Too Many Requests",
+      "Retry-After",
+      "Reverse Proxy",
+      "Distributed Rate Limiting"
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to article</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/islam-darawsheh/">Profile</a>
+        <a href="/articles/">Articles</a>
+        <a href="/#contact">Connect</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="article shell">
+      <header class="article-header">
+        <p class="eyebrow">.NET 10 · ASP.NET Core · API Protection</p>
+        <h1>One Noisy Client Can Slow Everyone Down—Fix Your ASP.NET Core Rate Limiting</h1>
+        <p class="article-deck">Rate limiting is not just “100 requests per minute.” The partition key decides who competes for those 100 requests, while endpoint cost, queueing, proxy topology, and deployment scale decide whether the policy actually protects the resource you care about.</p>
+        <div class="article-meta">
+          <span>By Islam Darawsheh</span>
+          <time datetime="2026-08-14">August 14, 2026</time>
+          <span>14 min read</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+        <p class="lead">Rate limiting looks deceptively simple. Pick a number, choose a window, add the middleware, and assume the API is protected. But a limit without a clearly defined owner can enforce the exact number you configured and still protect the wrong thing.</p>
+
+        <pre><code>PermitLimit = 100;
+Window = TimeSpan.FromMinutes(1);</code></pre>
+
+        <p>The more important question is:</p>
+
+        <blockquote>
+          Who owns those 100 requests?
+        </blockquote>
+
+        <p>Every authenticated user? Every API client? Every IP address? One endpoint? One application instance? Or everybody who happens to share the same bucket?</p>
+
+        <aside class="callout">
+          <strong>The principle for this article:</strong>
+          <p>Do not choose a rate limit until you know who is supposed to share it and which resource the limit is supposed to protect.</p>
+        </aside>
+
+        <h2>Keep three clients in mind</h2>
+
+        <p>Assume an ASP.NET Core 10 API serves three customers:</p>
+
+        <pre><code>Customer A → 20 requests/min
+Customer B → 15 requests/min
+Customer C → 25 requests/min</code></pre>
+
+        <p>Then Customer A deploys a buggy polling loop:</p>
+
+        <pre><code>Customer A → 500 requests/min</code></pre>
+
+        <p>What should happen?</p>
+
+        <pre><code>Customer A
+    ↓
+hits its own limit
+    ↓
+429 Too Many Requests
+
+Customer B → unaffected
+Customer C → unaffected</code></pre>
+
+        <p>That behavior is only possible if the limiter models those customers as separate partitions.</p>
+
+        <p>Microsoft describes rate-limit partitions as independent buckets with separate counters, commonly keyed by user ID, IP address, API key, or another application-specific value. The benefit is fairness: one caller does not have to consume everybody else's allowance.</p>
+
+        <h2>The dangerous version: everyone shares one bucket</h2>
+
+        <p>This limiter is valid code:</p>
+
+        <pre><code>options.GlobalLimiter =
+    PartitionedRateLimiter.Create&lt;HttpContext, string&gt;(
+        _ =&gt; RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: "all-clients",
+            factory: _ =&gt; new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));</code></pre>
+
+        <p>But it creates this model:</p>
+
+        <pre><code>                    100 requests/min
+                           │
+               ┌───────────┼───────────┐
+               │           │           │
+               A           B           C</code></pre>
+
+        <p>Customer A can consume the shared allowance and cause unrelated customers to be rejected. If queueing is enabled, unrelated callers can also be forced to wait behind traffic they did not generate.</p>
+
+        <p>The limiter is working exactly as configured. The problem is that the configuration modeled the wrong ownership boundary.</p>
+
+        <h2>GlobalLimiter does not mean one global bucket</h2>
+
+        <p>This terminology is easy to misread:</p>
+
+        <pre><code>options.GlobalLimiter</code></pre>
+
+        <p><code>GlobalLimiter</code> means the limiter is applied broadly to requests. It does <strong>not</strong> require one shared counter for the entire application.</p>
+
+        <p>Microsoft's ASP.NET Core documentation configures <code>GlobalLimiter</code> with <code>PartitionedRateLimiter</code>, including examples that partition by authenticated identity or IP address.</p>
+
+        <p>So the design question is not:</p>
+
+        <pre><code>Global limiter or partitioned limiter?</code></pre>
+
+        <p>A global limiter can itself be partitioned. The better question is:</p>
+
+        <blockquote>
+          Which partition should this request belong to?
+        </blockquote>
+
+        <h2>Authenticated clients should normally compete with themselves</h2>
+
+        <p>Suppose the business rule is:</p>
+
+        <pre><code>Standard client → 100 requests/min
+Premium client  → 1,000 requests/min</code></pre>
+
+        <p>A stable authenticated client identity is a natural partition key:</p>
+
+        <pre><code>Client A → Bucket A
+Client B → Bucket B
+Client C → Bucket C</code></pre>
+
+        <p>The important word is <strong>authenticated</strong>. I do not want an arbitrary caller-controlled string to manufacture unlimited partitions simply by changing a request header.</p>
+
+        <p>A stronger model is:</p>
+
+        <pre><code>credential
+   ↓
+authentication
+   ↓
+validated client identity
+   ↓
+partition key</code></pre>
+
+        <p>For example, the application might use a validated <code>client_id</code> or <code>sub</code> claim produced by its authentication layer rather than the raw credential itself.</p>
+
+        <h2>Middleware order matters when the limiter uses identity</h2>
+
+        <p>If the partitioner reads <code>HttpContext.User</code>, authentication must run before the limiter needs that identity.</p>
+
+        <p>Microsoft's authenticated-user rate-limiting sample uses this order:</p>
+
+        <pre><code>app.UseRouting();
+app.UseAuthentication();
+app.UseRateLimiter();
+app.UseAuthorization();</code></pre>
+
+        <p>If authentication has not populated <code>HttpContext.User</code>, code such as this can collapse callers into the same fallback partition:</p>
+
+        <pre><code>context.User.FindFirst("client_id")?.Value
+    ?? "anonymous"</code></pre>
+
+        <p>That can quietly turn a per-client design back into a shared bucket.</p>
+
+        <h2>A complete production-shaped example</h2>
+
+        <p>The following example combines four decisions:</p>
+
+        <ul>
+          <li>Authenticated clients get separate global buckets.</li>
+          <li>Premium clients get a larger allowance.</li>
+          <li>Anonymous traffic falls back to an IP partition.</li>
+          <li>An expensive export endpoint also gets a concurrency limit.</li>
+        </ul>
+
+        <pre><code>using System.Globalization;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddAuthentication("Bearer")
+    .AddJwtBearer();
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddRateLimiter(options =&gt;
+{
+    options.RejectionStatusCode =
+        StatusCodes.Status429TooManyRequests;
+
+    options.OnRejected = async (context, cancellationToken) =&gt;
+    {
+        if (context.Lease.TryGetMetadata(
+            MetadataName.RetryAfter,
+            out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter =
+                ((int)retryAfter.TotalSeconds)
+                    .ToString(CultureInfo.InvariantCulture);
+        }
+
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new
+            {
+                error = "rate_limit_exceeded"
+            },
+            cancellationToken);
+    };
+
+    options.GlobalLimiter =
+        PartitionedRateLimiter.Create&lt;HttpContext, string&gt;(
+            httpContext =&gt;
+            {
+                var clientId =
+                    httpContext.User.FindFirst("client_id")?.Value
+                    ?? httpContext.User.FindFirst("sub")?.Value;
+
+                if (clientId is null)
+                {
+                    var ip =
+                        httpContext.Connection.RemoteIpAddress?.ToString()
+                        ?? "unknown";
+
+                    return RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: $"anonymous:{ip}",
+                        factory: _ =&gt; new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 30,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0,
+                            AutoReplenishment = true
+                        });
+                }
+
+                var isPremium = string.Equals(
+                    httpContext.User.FindFirst("tier")?.Value,
+                    "premium",
+                    StringComparison.OrdinalIgnoreCase);
+
+                var permitLimit = isPremium ? 1_000 : 100;
+
+                return RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: $"client:{clientId}",
+                    factory: _ =&gt; new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = permitLimit,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                        AutoReplenishment = true
+                    });
+            });
+
+    options.AddConcurrencyLimiter(
+        policyName: "report-export",
+        configureOptions: limiter =&gt;
+        {
+            limiter.PermitLimit = 3;
+            limiter.QueueProcessingOrder =
+                QueueProcessingOrder.OldestFirst;
+            limiter.QueueLimit = 0;
+        });
+});
+
+var app = builder.Build();
+
+// If a reverse proxy is used, configure trusted forwarded
+// headers before relying on RemoteIpAddress.
+app.UseForwardedHeaders();
+
+app.UseRouting();
+app.UseAuthentication();
+app.UseRateLimiter();
+app.UseAuthorization();
+
+app.MapPost(
+        "/reports/export",
+        () =&gt; Results.Accepted())
+    .RequireAuthorization()
+    .RequireRateLimiting("report-export");
+
+app.Run();</code></pre>
+
+        <p>This is intentionally not a universal copy-and-paste policy. The numbers are placeholders. The useful part is the shape:</p>
+
+        <pre><code>stable client identity
+        ↓
+per-client request-rate bucket
+        ↓
+endpoint-specific resource protection
+        ↓
+explicit rejection contract</code></pre>
+
+        <p>Also notice that the concurrency policy is shared for the export endpoint. That is deliberate: the resource we are protecting there is not one customer's fairness allowance; it is the application's ability to run only a small number of expensive exports at once.</p>
+
+        <h2>IP-based limiting becomes an infrastructure problem</h2>
+
+        <p>Anonymous endpoints may not have an authenticated identity:</p>
+
+        <pre><code>/login
+/register
+/password-reset
+/public-search</code></pre>
+
+        <p>An IP address can be one useful signal, and Microsoft demonstrates IP-based rate-limit partitions. But once a reverse proxy or load balancer sits in front of the application, the address ASP.NET Core sees may initially be the proxy address rather than the original client's address.</p>
+
+        <pre><code>Client A ─┐
+Client B ─┼→ Reverse Proxy → ASP.NET Core
+Client C ─┘</code></pre>
+
+        <p>If every request appears to originate from the proxy, this partition key:</p>
+
+        <pre><code>context.Connection.RemoteIpAddress</code></pre>
+
+        <p>can accidentally place many real clients into one bucket.</p>
+
+        <p>ASP.NET Core's forwarded-header guidance explains that proxy servers obscure the originating address and that trusted forwarded headers are required when the application needs that original client information.</p>
+
+        <h2>Do not blindly trust X-Forwarded-For</h2>
+
+        <p>The opposite mistake is accepting forwarded headers from anybody.</p>
+
+        <p>Current ASP.NET Core behavior is deliberately hardened: forwarded headers from unknown proxies are ignored unless those proxies or networks are configured as trusted. Microsoft recommends reviewing the deployment topology and configuring <code>KnownProxies</code> or <code>KnownNetworks</code> appropriately.</p>
+
+        <pre><code>Internet Client
+      ↓
+Trusted Proxy
+      ↓
+X-Forwarded-For
+      ↓
+Forwarded Headers Middleware
+      ↓
+RemoteIpAddress
+      ↓
+Rate Limiter</code></pre>
+
+        <p>An IP-based limiter is only as trustworthy as the infrastructure that established the IP.</p>
+
+        <h2>There is another warning about partition keys</h2>
+
+        <p>Microsoft's rate-limiting guidance warns that creating partitions directly from user input can itself create a denial-of-service risk.</p>
+
+        <p>The reason is architectural: a partitioned limiter keeps limiter state for distinct partition keys. If an attacker can cheaply generate effectively unbounded unique keys, the application may be forced to create and retain unnecessary limiter state.</p>
+
+        <p>That is another reason to prefer bounded, validated identities such as authenticated user IDs or registered client IDs over arbitrary request strings.</p>
+
+        <h2>Who owns the quota is only half the design</h2>
+
+        <p>After deciding <strong>who</strong> owns the limit, decide <strong>what resource</strong> needs protection.</p>
+
+        <p>ASP.NET Core provides four main algorithms:</p>
+
+        <pre><code>Fixed Window
+Sliding Window
+Token Bucket
+Concurrency</code></pre>
+
+        <p>Microsoft distinguishes them in an important way: fixed-window, sliding-window, and token-bucket limiters constrain request volume over time, while the concurrency limiter constrains how many requests are executing at once.</p>
+
+        <p>Microsoft also recommends considering endpoint cost—such as time, data access, CPU, and I/O—when selecting a limiter.</p>
+
+        <h2>A cheap lookup and an expensive export are not the same resource</h2>
+
+        <p>Compare:</p>
+
+        <pre><code>GET /products/123</code></pre>
+
+        <p>with:</p>
+
+        <pre><code>POST /reports/export</code></pre>
+
+        <p>The first may be a quick indexed lookup. The second might run several queries, allocate large buffers, generate a document, and hold CPU or I/O resources for seconds.</p>
+
+        <p>A single rule such as:</p>
+
+        <pre><code>100 requests/minute</code></pre>
+
+        <p>does not express those two resource profiles very well.</p>
+
+        <p>For an expensive operation, a concurrency rule can be more meaningful:</p>
+
+        <pre><code>Maximum 3 report exports executing at once</code></pre>
+
+        <p>That can sit on top of a per-client global request-rate policy.</p>
+
+        <h2>Global and endpoint-specific limits can work together</h2>
+
+        <p>A useful architecture can look like this:</p>
+
+        <pre><code>Request
+   ↓
+per-client global limit
+   ↓
+endpoint-specific limit
+   ↓
+application work</code></pre>
+
+        <p>Microsoft's samples explicitly note that when both exist, the global limiter runs before the endpoint-specific limiter.</p>
+
+        <p>ASP.NET Core and <code>System.Threading.RateLimiting</code> also support chained limiters when multiple constraints should be evaluated as one combined limiter. That is useful when the rules really represent one composed resource policy rather than unrelated middleware decoration.</p>
+
+        <h2>Queueing is a product decision too</h2>
+
+        <p>Most limiter options can queue requests when permits are unavailable:</p>
+
+        <pre><code>QueueLimit = 10;
+QueueProcessingOrder = QueueProcessingOrder.OldestFirst;</code></pre>
+
+        <p>But queueing changes the failure mode.</p>
+
+        <pre><code>QueueLimit = 0
+    ↓
+reject quickly
+
+QueueLimit &gt; 0
+    ↓
+wait for a permit
+    ↓
+request latency increases
+    ↓
+caller may still timeout</code></pre>
+
+        <p>For a latency-sensitive HTTP API, I would not enable a queue simply because the framework supports one. Sometimes a clear <code>429</code> is a healthier contract than hiding overload behind growing latency.</p>
+
+        <p>For long-running work, the more important architecture question may be whether the operation belongs in an application-level background job queue rather than in an HTTP rate-limiter queue.</p>
+
+        <h2>429 is not the middleware default</h2>
+
+        <p>This is one ASP.NET Core detail worth making explicit.</p>
+
+        <p><code>RateLimiterOptions.RejectionStatusCode</code> defaults to:</p>
+
+        <pre><code>503 Service Unavailable</code></pre>
+
+        <p>not:</p>
+
+        <pre><code>429 Too Many Requests</code></pre>
+
+        <p>For ordinary client throttling, I usually prefer to make the contract explicit:</p>
+
+        <pre><code>options.RejectionStatusCode =
+    StatusCodes.Status429TooManyRequests;</code></pre>
+
+        <p><code>OnRejected</code> can then add application-specific response content and a <code>Retry-After</code> header when the limiter provides that estimate.</p>
+
+        <h2>Retry-After depends on the algorithm</h2>
+
+        <p>Microsoft's official samples call out an important difference:</p>
+
+        <ul>
+          <li>Fixed window can estimate retry time.</li>
+          <li>Sliding window can estimate retry time.</li>
+          <li>Token bucket can estimate retry time.</li>
+          <li>Concurrency limiting cannot predict when an in-flight request will finish.</li>
+        </ul>
+
+        <p>So a generic policy that promises a meaningful <code>Retry-After</code> value for every limiter type would be misleading.</p>
+
+        <h2>Application rate limiting is not complete DDoS protection</h2>
+
+        <p>Rate limiting can mitigate abuse and some denial-of-service pressure, but Microsoft explicitly says it is not a comprehensive DDoS solution.</p>
+
+        <p>Think in layers:</p>
+
+        <pre><code>Internet
+   ↓
+CDN / WAF / DDoS protection
+   ↓
+reverse proxy / gateway
+   ↓
+ASP.NET Core rate limiting
+   ↓
+authorization
+   ↓
+business operation</code></pre>
+
+        <p>Application rate limiting is valuable because it understands application identity, endpoint cost, and product policy. It should not pretend to replace infrastructure designed to absorb large distributed attacks.</p>
+
+        <h2>The multi-instance trap</h2>
+
+        <p>Suppose the API is deployed on four replicas:</p>
+
+        <pre><code>Load Balancer
+    │
+    ├── Instance 1
+    ├── Instance 2
+    ├── Instance 3
+    └── Instance 4</code></pre>
+
+        <p>and the application configures:</p>
+
+        <pre><code>100 requests/min per client</code></pre>
+
+        <p>The built-in <code>System.Threading.RateLimiting</code> implementations are in-memory. An official ASP.NET Core issue requesting a Redis-backed limiter specifically describes the need for a limiter that works across multiple hosts in a distributed environment.</p>
+
+        <p>So do not silently interpret an in-process limiter as:</p>
+
+        <pre><code>100 requests/min across the entire cluster</code></pre>
+
+        <p>unless the architecture actually coordinates that quota at a shared layer.</p>
+
+        <p>Depending on the requirement, cluster-wide enforcement may belong at a gateway, reverse proxy, edge service, or a distributed limiter backed by shared state.</p>
+
+        <aside class="callout">
+          <strong>Ask this before scaling out:</strong>
+          <p>Is the quota supposed to be per process, per instance, or per client across the entire service? Those are different guarantees.</p>
+        </aside>
+
+        <h2>Measure the limiter, do not just configure it</h2>
+
+        <p>ASP.NET Core exposes built-in rate-limiting metrics, and Microsoft's guidance explicitly recommends stress testing rate-limit configurations before production deployment.</p>
+
+        <p>A useful test plan should include more than the happy path:</p>
+
+        <ul>
+          <li>One client exhausting only its own partition.</li>
+          <li>Several clients staying independent under load.</li>
+          <li>Anonymous traffic behind the real proxy topology.</li>
+          <li>Premium and standard tiers receiving different limits.</li>
+          <li>Expensive endpoints reaching concurrency limits.</li>
+          <li>Queue-disabled requests failing quickly.</li>
+          <li>Correct <code>429</code> and <code>Retry-After</code> behavior.</li>
+          <li>Multiple application instances if cluster-wide quotas matter.</li>
+        </ul>
+
+        <h2>The design I would ship</h2>
+
+        <p>For an authenticated API, my starting model would be:</p>
+
+        <pre><code>Request
+   ↓
+trusted forwarded-header processing
+   ↓
+authentication
+   ↓
+resolve stable client/user identity
+   ↓
+partitioned global rate limit
+   │
+   ├── Client A bucket
+   ├── Client B bucket
+   └── Client C bucket
+   ↓
+optional endpoint-specific protection
+   ↓
+application work</code></pre>
+
+        <p>And I would answer these questions explicitly:</p>
+
+        <ul>
+          <li>Who owns the quota?</li>
+          <li>Which callers are allowed to share a bucket?</li>
+          <li>What resource is being protected?</li>
+          <li>Is the constraint request rate or concurrency?</li>
+          <li>Can callers wait, or should they fail fast?</li>
+          <li>What does a rejection look like?</li>
+          <li>Is <code>Retry-After</code> meaningful for this algorithm?</li>
+          <li>Does the application run behind trusted proxies?</li>
+          <li>Is the quota per instance or cluster-wide?</li>
+        </ul>
+
+        <p>Only after those questions are answered would I choose the number:</p>
+
+        <pre><code>100 requests/minute</code></pre>
+
+        <h2>What I would not standardize</h2>
+
+        <ul>
+          <li>One shared bucket for every authenticated user.</li>
+          <li>IP limiting without understanding the proxy chain.</li>
+          <li>Arbitrary untrusted strings as unbounded partition identities.</li>
+          <li>The same limiter for cheap and expensive endpoints.</li>
+          <li>Queueing simply because <code>QueueLimit</code> exists.</li>
+          <li>Implicit <code>503</code> when the API contract intends <code>429</code>.</li>
+          <li>Application rate limiting as the only DDoS defense.</li>
+          <li>Per-process counters presented as cluster-wide quotas.</li>
+          <li>Production limits chosen without load testing.</li>
+        </ul>
+
+        <blockquote>
+          A rate limiter can enforce the exact number you configured and still protect the wrong thing.
+        </blockquote>
+
+        <p>The quality of the design comes from the boundary around the number: whose traffic shares it, which resource it protects, where its state lives, and what the caller experiences when the limit is reached.</p>
+
+        <h2>References</h2>
+
+        <p>This article follows the site's primary-source-first editorial rule. The main technical references are official Microsoft and .NET sources:</p>
+
+        <ul>
+          <li><a href="https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit?view=aspnetcore-10.0">Microsoft Learn — Rate limiting middleware in ASP.NET Core 10</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit-samples?view=aspnetcore-10.0">Microsoft Learn — ASP.NET Core rate limiter samples</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.ratelimiting.ratelimiteroptions.rejectionstatuscode?view=aspnetcore-10.0">Microsoft Learn — RateLimiterOptions.RejectionStatusCode</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.threading.ratelimiting.partitionedratelimiter?view=aspnetcore-10.0">Microsoft Learn — PartitionedRateLimiter</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-10.0">Microsoft Learn — Proxy servers, load balancers, and forwarded headers</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/aspnet/core/breaking-changes/8/forwarded-headers-unknown-proxies?view=aspnetcore-10.0">Microsoft Learn — Forwarded headers from unknown proxies</a></li>
+          <li><a href="https://github.com/dotnet/aspnetcore/issues/41861">dotnet/aspnetcore — Redis-backed distributed rate limiter proposal</a></li>
+        </ul>
+      </div>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p class="comments-intro">What owns the quota in your API: the user, client, IP, endpoint, tenant, or the entire service?</p>
+        <script src="https://giscus.app/client.js"
+                data-repo="Darawsheh/darawsheh.github.io"
+                data-repo-id="R_kgDOTv89MQ"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOTv89Mc4DC0Gm"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
+      </section>
+
+      <footer class="article-footer">
+        <div>
+          <p class="eyebrow">About the author</p>
+          <h2>Islam Darawsheh</h2>
+          <p>Software Architect and Technical Lead focused on enterprise .NET, secure systems, SaaS platforms, integration-heavy solutions, and maintainable software delivery.</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/articles/">More articles</a>
+          <a class="button" href="https://www.linkedin.com/in/darawsheh/">LinkedIn</a>
+        </div>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div>
+  </footer>
+  <script src="../../assets/script.js" defer></script>
+  <!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"c49bf167d60b425c9686b4c56244eae8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
