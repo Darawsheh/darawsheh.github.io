@@ -29,6 +29,12 @@
 
   const articles = [
     {
+      slug: 'dotnet-11-9-new-features-that-actually-matter',
+      title: '.NET 11: 9 New Features That Actually Matter to Developers',
+      description: 'C# 15 unions, runtime async, request compression, FullJoin, encrypted ZIPs, Blazor, vector search, MAUI, and NativeAOT—the .NET 11 changes worth watching.',
+      published: '2026-08-21'
+    },
+    {
       slug: 'aspnet-core-rate-limiting-noisy-client',
       title: 'One Noisy Client Can Slow Everyone Down—Fix Your ASP.NET Core Rate Limiting',
       description: 'A production-minded ASP.NET Core 10 guide to rate-limit partitions, authenticated client identity, reverse proxies, endpoint cost, 429 responses, queueing, and multi-instance deployment trade-offs.',

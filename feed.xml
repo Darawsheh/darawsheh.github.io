@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>.NET 11: 9 New Features That Actually Matter to Developers</title>
+      <link>https://darawsheh.github.io/articles/dotnet-11-9-new-features-that-actually-matter/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/dotnet-11-9-new-features-that-actually-matter/</guid>
+      <pubDate>Fri, 21 Aug 2026 00:00:00 GMT</pubDate>
+      <description>A practical look at nine .NET 11 features worth watching, from C# 15 unions and runtime async to HTTP request compression, ZIP encryption, EF Core vector search, Blazor, and .NET MAUI.</description>
+    </item>
+    <item>
       <title>One Noisy Client Can Slow Everyone Down—Fix Your ASP.NET Core Rate Limiting</title>
       <link>https://darawsheh.github.io/articles/aspnet-core-rate-limiting-noisy-client/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/aspnet-core-rate-limiting-noisy-client/</guid>
