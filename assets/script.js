@@ -29,6 +29,12 @@
 
   const articles = [
     {
+      slug: 'mcp-dotnet-build-mcp-server-csharp',
+      title: 'MCP in .NET: What It Actually Solves and How to Build an MCP Server in C#',
+      description: 'MCP architecture, ASP.NET Core tools, SDK 2.0 stateless HTTP, MRTR, security, Clean Architecture, and when a normal API is still better.',
+      published: '2026-08-31'
+    },
+    {
       slug: 'dotnet-11-9-new-features-that-actually-matter',
       title: '.NET 11: 9 New Features That Actually Matter to Developers',
       description: 'C# 15 unions, runtime async, request compression, FullJoin, encrypted ZIPs, Blazor, vector search, MAUI, and NativeAOT—the .NET 11 changes worth watching.',
