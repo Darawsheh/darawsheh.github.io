@@ -27,15 +27,36 @@ jobs:
       - name: Validate crawl and SEO requirements
         run: python scripts/seo_validate.py
 
+      - name: Run SEO regression tests
+        run: python -m unittest discover -s scripts/tests -v
+
       - name: Validate static article SEO metadata
         run: python scripts/normalize_article_seo.py --check
 
       - name: Validate ProfilePage datetime values
         run: python scripts/seo_profile_datetime.py
 
-  indexnow:
+  live:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Validate the deployed GitHub Pages site
+        run: python scripts/seo_live_validate.py
+
+  indexnow:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs:
+      - validate
+      - live
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
