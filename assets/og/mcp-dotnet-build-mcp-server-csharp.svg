@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">MCP in .NET: What It Actually Solves and How to Build an MCP Server in C#</title>
+  <desc id="desc">Islam Darawsheh technical article cover about Model Context Protocol, ASP.NET Core, and C#</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="1" stop-color="#1f2937"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="36" fill="url(#bg)"/>
+  <circle cx="1050" cy="120" r="170" fill="#38bdf8" opacity="0.12"/>
+  <circle cx="1030" cy="560" r="220" fill="#a78bfa" opacity="0.10"/>
+  <text x="70" y="105" fill="#93c5fd" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">.NET · ASP.NET Core · MCP</text>
+  <text x="70" y="205" fill="#f8fafc" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700">MCP in .NET</text>
+  <text x="70" y="285" fill="#e2e8f0" font-family="Arial, Helvetica, sans-serif" font-size="38">What It Actually Solves</text>
+  <text x="70" y="345" fill="#e2e8f0" font-family="Arial, Helvetica, sans-serif" font-size="38">and How to Build an MCP Server in C#</text>
+  <rect x="70" y="410" width="760" height="3" fill="#38bdf8" opacity="0.8"/>
+  <text x="70" y="475" fill="#cbd5e1" font-family="Arial, Helvetica, sans-serif" font-size="28">Architecture · Tools · Stateless HTTP · MRTR · Security</text>
+  <text x="70" y="625" fill="#b8c5d8" font-family="Arial, Helvetica, sans-serif" font-size="22">Islam Darawsheh • darawsheh.github.io/articles</text>
+</svg>

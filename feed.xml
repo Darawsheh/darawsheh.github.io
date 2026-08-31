@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>MCP in .NET: What It Actually Solves and How to Build an MCP Server in C#</title>
+      <link>https://darawsheh.github.io/articles/mcp-dotnet-build-mcp-server-csharp/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/mcp-dotnet-build-mcp-server-csharp/</guid>
+      <pubDate>Mon, 31 Aug 2026 00:00:00 GMT</pubDate>
+      <description>A practical .NET guide to Model Context Protocol: what MCP solves, how it differs from REST and function calling, and how to build a secure ASP.NET Core MCP server.</description>
+    </item>
+    <item>
       <title>.NET 11: 9 New Features That Actually Matter to Developers</title>
       <link>https://darawsheh.github.io/articles/dotnet-11-9-new-features-that-actually-matter/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/dotnet-11-9-new-features-that-actually-matter/</guid>
