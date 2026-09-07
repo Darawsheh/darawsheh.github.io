@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>When the Agent Writes the Code, Are You Still the Developer? | Islam Darawsheh</title>
-  <meta name="description" content="AI coding agents can accelerate delivery, but without disciplined oversight they can weaken developer understanding, review quality, and ownership.">
+  <meta name="description" content="AI coding agents can accelerate delivery, but they can weaken junior developers’ learning and turn experienced engineers into passive reviewers.">
   <meta name="author" content="Islam Darawsheh">
   <meta name="robots" content="index,follow">
-  <meta name="keywords" content="AI coding agents, software development, junior developers, code review, cognitive offloading, knowledge debt, agentic coding">
+  <meta name="keywords" content="AI coding agents, software development, junior developers, code review, cognitive offloading, knowledge debt, human oversight">
   <meta name="theme-color" content="#111827">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
@@ -18,18 +18,20 @@
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Islam Darawsheh">
   <meta property="og:title" content="When the Agent Writes the Code, Are You Still the Developer?">
-  <meta property="og:description" content="Coding agents can produce more code than developers can meaningfully absorb. Recent 2026 research shows why the new bottleneck is not generation—it is understanding, review, and accountability.">
+  <meta property="og:description" content="Coding agents can accelerate delivery while creating knowledge debt, weaker skill formation, and shallow review. The real risk is losing ownership of what ships.">
   <meta property="og:url" content="https://darawsheh.github.io/articles/ai-coding-agents-risks-developers/">
   <meta property="og:image" content="https://darawsheh.github.io/assets/og/ai-coding-agents-risks-developers.svg">
   <meta property="og:image:alt" content="When the Agent Writes the Code, Are You Still the Developer?">
   <meta property="article:published_time" content="2026-09-07">
   <meta property="article:author" content="Islam Darawsheh">
   <meta property="article:tag" content="AI coding agents">
-  <meta property="article:tag" content="Software Engineering">
-  <meta property="article:tag" content="Code Review">
+  <meta property="article:tag" content="Software development">
+  <meta property="article:tag" content="Code review">
+  <meta property="article:tag" content="Developer skills">
+  <meta property="article:tag" content="Human oversight">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="When the Agent Writes the Code, Are You Still the Developer?">
-  <meta name="twitter:description" content="Coding agents can produce more code than developers can meaningfully absorb. Recent 2026 research shows why the new bottleneck is not generation—it is understanding, review, and accountability.">
+  <meta name="twitter:description" content="Coding agents can accelerate delivery while creating knowledge debt, weaker skill formation, and shallow review. The real risk is losing ownership of what ships.">
   <meta name="twitter:image" content="https://darawsheh.github.io/assets/og/ai-coding-agents-risks-developers.svg">
   <meta name="twitter:image:alt" content="When the Agent Writes the Code, Are You Still the Developer?">
   <script type="application/ld+json">
@@ -37,7 +39,7 @@
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": "When the Agent Writes the Code, Are You Still the Developer?",
-    "description": "AI coding agents can accelerate delivery, but without disciplined oversight they can weaken developer understanding, review quality, and ownership.",
+    "description": "AI coding agents can accelerate delivery, but they can weaken junior developers’ learning and turn experienced engineers into passive reviewers.",
     "datePublished": "2026-09-07",
     "dateModified": "2026-09-07",
     "author": {
@@ -58,9 +60,11 @@
     "keywords": [
       "AI coding agents",
       "software development",
+      "junior developers",
       "code review",
       "cognitive offloading",
-      "knowledge debt"
+      "knowledge debt",
+      "human oversight"
     ],
     "url": "https://darawsheh.github.io/articles/ai-coding-agents-risks-developers/",
     "image": [
@@ -76,397 +80,483 @@
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to article</a>
-  <header class="site-header"><div class="shell header-inner">
-    <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
-    <nav aria-label="Primary navigation"><a href="/">Home</a><a href="/islam-darawsheh/">Profile</a><a href="/articles/">Articles</a><a href="/#contact">Connect</a></nav>
-    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
-  </div></header>
-  <main id="main"><article class="article shell">
-    <header class="article-header">
-      <p class="eyebrow">AI · Software Engineering · Code Review</p>
-      <h1>When the Agent Writes the Code, Are You Still the Developer?</h1>
-      <p class="article-deck">Coding agents can produce more code than developers can meaningfully absorb. Recent 2026 research shows why the new bottleneck is not generation—it is understanding, review, and accountability.</p>
-      <div class="article-meta"><span>By Islam Darawsheh</span><time datetime="2026-09-07">September 7, 2026</time><span>15 min read</span></div>
-    </header>
-    <div class="article-body"><p>You ask an AI coding agent to implement what sounds like a small
-feature. You leave it working for a few minutes and return to find that
-it has modified twenty files, added a database migration, changed
-several service registrations, and written a new test suite. It then
-reports, confidently, that the task is complete and every test has
-passed.</p>
-<p>The result looks impressive. But there is a more important question
-than the number of changed files or the reassuring line of green
-checks:</p>
-<p><strong>Do you actually know what happened inside your
-project?</strong></p>
-<p>Can you explain the decisions the agent made? Do you know which
-assumptions shaped its solution? Did you verify that the tests validate
-the intended behavior, or did you merely notice that they passed? If the
-feature fails in production next week, will you know where to begin?</p>
-<p>These questions are not an argument against AI coding agents. Modern
-agents can save real time and complete work that once took developers
-hours. However, the transition from an assistant that suggests a few
-lines of code to an agent that explores a repository, executes commands,
-edits files, and makes a chain of decisions has changed the nature of
-the risk.</p>
-<p>The problem is no longer limited to AI suggesting an incorrect line
-of code. The new danger is that it can complete an entire sequence of
-work while the developer gradually loses both an understanding of what
-happened and genuine ownership of the decisions made.</p>
-<h2 id="an-agent-is-not-just-smarter-autocomplete">An Agent Is Not Just
-Smarter Autocomplete</h2>
-<p>Traditional code completion suggested a function or a few lines while
-the developer remained inside the implementation process. A modern
-coding agent can:</p>
-<ul>
-<li>Explore the repository and identify files related to the task.</li>
-<li>Create a plan and execute it across multiple steps.</li>
-<li>Modify dozens of files in a single session.</li>
-<li>Run builds, tests, linters, and static-analysis tools.</li>
-<li>Add dependencies, migrations, and configuration.</li>
-<li>Detect some of its own failures and attempt new solutions.</li>
-<li>Declare the task complete without requiring the developer to inspect
-every step.</li>
-</ul>
-<p>That capability is the source of an agent’s value. It is also the
-source of its risk. The more independently it can operate, the wider the
-possible gap between what happened in the codebase and what the
-developer understands about it.</p>
-<h2 id="the-junior-developers-risk-results-without-a-mental-model">The
-Junior Developer’s Risk: Results Without a Mental Model</h2>
-<p>Junior developers have traditionally learned through a repetitive
-cycle: write something, make a mistake, read the error, investigate it,
-try another approach, and eventually understand why one solution worked
-while another failed. That cycle is slow and sometimes painful, but it
-builds a mental model of the system.</p>
-<p>An agent can produce a working application without requiring the
-developer to experience much of that cycle. After a while, the developer
-may appear capable of delivering complex features even though their
-ability to read, diagnose, and reason about the system has not developed
-at the same rate.</p>
-<p>They can demonstrate the result but may struggle to answer questions
-such as:</p>
-<ul>
-<li>Why was this design selected instead of a simpler alternative?</li>
-<li>Which dependency-injection lifetime is appropriate here, and
-why?</li>
-<li>What happens if two requests reach this code simultaneously?</li>
-<li>Where does the transaction begin and end?</li>
-<li>Does this test validate real behavior, or only prove that a mock
-returned the configured value?</li>
-<li>Does the solution fit the surrounding architecture, or does it
-merely work in isolation?</li>
-</ul>
-<p>This creates an <strong>illusion of competence</strong>: the
-developer’s ability to produce professional-looking output rises much
-faster than their ability to understand it and make independent
-engineering decisions.</p>
-<h2
-id="a-2026-experiment-faster-completion-did-not-mean-better-understanding">A
-2026 Experiment: Faster Completion Did Not Mean Better
-Understanding</h2>
-<p>In January 2026, Anthropic published a randomized controlled trial
-involving 52 software engineers, most of them junior developers.
-Participants learned a Python library, completed programming tasks with
-it, and then took a test covering conceptual understanding, code
-reading, and debugging.</p>
-<p>The AI-assisted group completed the practical task about two minutes
-faster on average, but the speed difference was not statistically
-significant. The difference in understanding was significant: the AI
-group scored an average of <strong>50% on the assessment, compared with
-67% for the group that coded without AI</strong>. The largest gap
-appeared in debugging questions—the exact skill developers need when
-generated code is wrong.</p>
-<p>Importantly, AI use did not produce the same outcome for everyone.
-Participants who delegated the implementation and debugging directly to
-AI were among the fastest, but they showed some of the weakest
-understanding. Those who asked conceptual questions, requested
-explanations, or checked their understanding after generation retained
-substantially more knowledge.</p>
-<p>There is an important limitation: the experiment used an AI assistant
-inside a coding environment, not a fully autonomous product such as
-Claude Code or Codex. It therefore does not prove that every coding
-agent reduces learning. It does, however, provide recent evidence that
-<strong>the method of delegation</strong> can deliver faster output at
-the expense of the skills required to evaluate and maintain that output.
-<a
-href="https://www.anthropic.com/research/AI-assistance-coding-skills">Anthropic’s
-study on AI and coding-skill formation</a></p>
-<h2 id="when-errors-disappear-some-learning-disappears-with-them">When
-Errors Disappear, Some Learning Disappears With Them</h2>
-<p>We usually treat errors as wasted time. Yet much of a developer’s
-expertise is formed while discovering why something failed, not while
-typing the final correct implementation.</p>
-<p>A developer who personally investigates a race condition becomes more
-alert to concurrency risks in the future. Someone who discovers that a
-stateful service was registered as a singleton rarely forgets the
-importance of service lifetimes. A developer who ships a bug despite
-having a green test suite learns the difference between increasing
-coverage and creating a meaningful safety net.</p>
-<p>If the agent encounters and resolves all those problems away from the
-developer’s attention, the product may improve while the knowledge that
-should have formed during its construction is lost.</p>
-<p>This does not mean forcing developers to reinvent every solution or
-banning them from using AI. It means refusing to confuse <strong>task
-completion</strong> with <strong>skill acquisition</strong>. They are
-different outcomes, and one can improve while the other
-deteriorates.</p>
-<h2 id="experienced-developers-face-a-different-risk">Experienced
-Developers Face a Different Risk</h2>
-<p>Experienced developers do not usually lack the fundamentals. Their
-problem begins when their expertise becomes a reason not to follow the
-work closely:</p>
-<aside class="callout"><p>I know the architecture. If the agent makes a serious mistake, I will
-catch it later.</p></aside>
-<p>At first, they delegate repetitive work. Then they delegate an entire
-feature. Eventually, they allow several agents to process multiple tasks
-in parallel. As the volume of generated work increases, meaningful
-review becomes harder. They read the summary, check whether the tests
-passed, scan selected parts of the diff, and approve the result.</p>
-<p>The experienced developer does not suddenly lose years of knowledge.
-Their relationship with the project changes gradually: they move from
-being the engineer who constructs and understands decisions to the
-person managing a stream of output produced faster than they can absorb
-it.</p>
-<p>Calling this simply “laziness” would be emotionally satisfying but
-technically incomplete. It is usually a combination of three
-effects:</p>
-<ol type="1">
-<li><strong>Cognitive offloading:</strong> A growing share of reasoning
-and verification is delegated to the tool.</li>
-<li><strong>Review fatigue:</strong> The developer must continuously
-review changes that are too large or too numerous for careful
-inspection.</li>
-<li><strong>Automation habituation:</strong> Because the tool’s output
-is acceptable most of the time, scrutiny gradually becomes less
-rigorous.</li>
-</ol>
-<h2 id="a-2026-study-found-more-approvals-and-less-scrutiny">A 2026
-Study Found More Approvals and Less Scrutiny</h2>
-<p>A study published in June 2026 analyzed 11,429 reviews performed by
-400 people who repeatedly reviewed pull requests created by coding
-agents over seven months.</p>
-<p>Approval increased between reviewers’ early and later interactions.
-When each reviewer’s experience was divided into ten stages, approval
-rates rose from <strong>27.9% to 42.4%</strong>, while change-request
-rates fell from 11.2% to 5.6%. At the same time, the number of inline
-review comments declined by <strong>22%</strong>, and the total number
-of words in those comments fell by 28%.</p>
-<p>This pattern is consistent with reviewers becoming habituated to
-agent output and inspecting it less closely. It does not prove that
-laziness caused the change; agent quality might also have improved
-during the observation period. The more defensible conclusion is that
-the data showed <strong>an increase in approvals accompanied by a
-measurable reduction in visible review effort</strong>. <a
-href="https://arxiv.org/abs/2606.22721">Habituation at the Gate</a></p>
-<p>That distinction matters because assurances about safe agentic
-development often end with the phrase “a human will remain in the loop.”
-But placing a human name on the approval does not prove that the person
-understood the change. The value of review comes from its depth, not
-merely from its existence.</p>
-<p>A July 2026 enterprise case study shows how quickly this can become a
-capacity problem. Across 802 developers and 196,212 pull requests,
-per-developer throughput eventually reached 2.09 times the pre-mandate
-baseline. Yet the review load per reviewer also roughly doubled, and
-automated review overtook human review. The study covered one AI-forward
-company and adoption was not randomly assigned, so it should not be
-treated as a universal productivity forecast. It does demonstrate the
-operational tension clearly: generation can scale faster than careful
-human inspection. <a href="https://arxiv.org/abs/2607.01904">AI Writes
-Faster Than Humans Can Review</a></p>
-<h2 id="does-the-agent-understand-what-we-actually-asked-for">Does the
-Agent Understand What We Actually Asked For?</h2>
-<p>An agent can write technically valid code and still complete the
-wrong task. It may exceed the requested scope, apply what it considers a
-best practice despite an explicit project decision, or announce success
-before verifying a critical requirement.</p>
-<p>A large study published in May 2026 examined <strong>20,574 real
-coding-agent sessions</strong> across 1,639 repositories. Its data
-included sessions collected through April 2026 and covered tools such as
-Claude Code, Cursor, Codex, GitHub Copilot, and OpenCode.</p>
-<p>Among the detected developer-agent misalignment episodes:</p>
-<ul>
-<li>38.33% involved violating a developer constraint.</li>
-<li>26.95% involved misreading the developer’s intent.</li>
-<li>22.58% involved inaccurate reporting about progress or
-completion.</li>
-<li>17.82% involved a faulty implementation.</li>
-<li>10.20% involved self-initiated action beyond the requested
-scope.</li>
-</ul>
-<p>Where a visible resolution occurred in the conversation,
-<strong>91.49% required explicit correction or pushback from the
-developer</strong>. In other words, the agent did not reliably correct
-its own direction. It first needed an attentive developer to notice the
-deviation. <a href="https://arxiv.org/abs/2605.29442">How Coding Agents
-Fail Their Users</a></p>
-<p>This brings us back to the central problem: a developer who does not
-follow what happens behind the scenes may not even realize that the
-agent implemented a different task, violated a constraint, or declared
-success without satisfying the requirement.</p>
-<h2 id="faster-code-can-create-faster-debt">Faster Code Can Create
-Faster Debt</h2>
-<p>Agent output is easy to count: files changed, commits created, pull
-requests opened, or lines written. The complexity and maintenance burden
-left behind are much harder to measure.</p>
-<p>In a study published in March 2026, researchers analyzed 304,362
-verified AI-authored commits across 6,275 GitHub repositories. Static
-analysis identified 484,606 issues introduced by those changes, with
-code smells accounting for 89.1% of them. More than 15% of the commits
-attributed to every studied AI assistant introduced at least one issue,
-and <strong>24.2% of the tracked issues remained in the latest version
-of the repository</strong>. <a
-href="https://arxiv.org/abs/2603.28592">Debt Behind the AI Boom</a></p>
-<p>Another longitudinal analysis published in January 2026 found that
-agent adoption produced substantial early velocity gains in some
-repositories, but little or only temporary additional throughput in
-projects that had previously used AI-enabled IDEs. In contrast,
-static-analysis warnings increased by roughly 18%, while cognitive
-complexity rose by about 35%. <a
-href="https://arxiv.org/abs/2601.13597">AI IDEs or Autonomous
-Agents?</a></p>
-<p>These results do not mean that all agent-generated code is poor, just
-as human authorship does not guarantee good code. They warn against
-measuring success by generation speed alone. An agent can create
-technical debt at the same speed with which it creates features.</p>
-<h2 id="from-technical-debt-to-knowledge-debt">From Technical Debt to
-Knowledge Debt</h2>
-<p>Technical debt exists in the code: excessive coupling, duplication,
-fragile design, or a temporary workaround that quietly became
-permanent.</p>
-<p>Agentic development can produce another kind of liability:
-<strong>knowledge debt</strong>—the gap between what the system can do
-and what its maintainers understand about it.</p>
-<p>Knowledge debt accumulates when:</p>
-<ul>
-<li>The agent changes components that nobody reads carefully.</li>
-<li>Architectural decisions pass unnoticed inside a large diff.</li>
-<li>The team relies on agent-generated tests to assess agent-generated
-code.</li>
-<li>Everyone knows that the solution works, but nobody knows why.</li>
-<li>Calling another agent becomes the only practical way to understand
-what the previous agent built.</li>
-</ul>
-<p>The project may remain stable for a long time, so the problem does
-not appear urgent. It surfaces during an incident, a fundamental
-requirement change, the departure of the developer who supervised the
-agent, or the tool’s failure to recover the original context. The team
-then discovers that it owns the code but no longer owns enough knowledge
-to maintain it confidently.</p>
-<h2
-id="the-productivity-gains-are-realbut-they-are-not-the-whole-story">The
-Productivity Gains Are Real—but They Are Not the Whole Story</h2>
-<p>A balanced discussion must acknowledge that agents also create real
-value.</p>
-<p>In a METR survey conducted between February and April 2026, 349
-technical workers estimated that AI had increased the value of their
-work by a median of approximately 1.4 to 2 times. Their median estimated
-speed increase was threefold. The researchers, however, cautioned that
-self-reported gains may overstate real-world improvement and that faster
-execution does not necessarily create an equivalent increase in value.
-<a href="https://metr.org/blog/2026-05-11-ai-usage-survey/">METR’s 2026
-technical-worker productivity survey</a></p>
-<p>A study presented at MSR 2026 also found that human intervention
-occurred less frequently in agent-authored pull requests than in
-human-authored ones. When intervention was required, however, it
-involved longer durations and larger code changes. Guidance-level
-intervention accounted for 58.02% of the observed human effort,
-including constraining the agent’s actions and enforcing project
-conventions. The developer’s work was not eliminated; it shifted from
-direct implementation toward supervision, guidance, and quality control.
-<a
-href="https://2026.msrconf.org/details/msr-2026-mining-challenge/26/Behind-Agentic-Pull-Requests-An-Empirical-Study-on-Developer-Interventions-in-AI-Age">Behind
-Agentic Pull Requests at MSR 2026</a></p>
-<p>The right question is therefore not whether agents save time. In many
-tasks, they clearly do. The better question is:</p>
-<aside class="callout"><p><strong>What kind of time did we save, and what responsibility or
-knowledge did we give up in exchange?</strong></p></aside>
-<h2 id="how-can-developers-use-agents-without-becoming-spectators">How
-Can Developers Use Agents Without Becoming Spectators?</h2>
-<p>The solution is not to return to writing everything manually.
-Ignoring a tool that can automate repetitive work, explore a large
-repository, generate initial tests, or create a prototype quickly would
-make little sense. The goal is to use the agent without surrendering the
-developer’s role as decision-maker and accountable owner.</p>
-<h3 id="1-do-not-accept-code-you-cannot-explain">1. Do Not Accept Code
-You Cannot Explain</h3>
-<p>You do not need to memorize every line. You should, however, be able
-to explain the feature’s flow, transaction boundaries, architectural
-decisions, failure points, and effect on the surrounding system.</p>
-<h3 id="2-review-decisions-before-reviewing-details">2. Review Decisions
-Before Reviewing Details</h3>
-<p>Before inspecting a large diff, ask the agent to state its
-assumptions, alternatives, and reasons for modifying each area.
-Excellent syntax review cannot rescue a solution built in the wrong
-direction.</p>
-<h3 id="3-keep-changes-small-enough-to-understand">3. Keep Changes Small
-Enough to Understand</h3>
-<p>The larger the change, the easier it becomes to hide a bad decision
-among hundreds of acceptable lines. Give every stage a narrow objective,
-explicit boundaries, and verifiable acceptance criteria.</p>
-<h3 id="4-do-not-let-the-agent-be-the-only-witness-to-its-success">4. Do
-Not Let the Agent Be the Only Witness to Its Success</h3>
-<p>If the same agent writes the code, creates the tests, runs them, and
-summarizes the result, then one source controls both implementation and
-evaluation. Use independent tests, static analysis, human review, and
-direct execution of important scenarios.</p>
-<h3 id="5-ask-for-evidence-not-reassurance">5. Ask for Evidence, Not
-Reassurance</h3>
-<p>There is a difference between “the problem is fixed” and showing the
-test that failed before the change and passed afterward. Require command
-output, behavioral comparisons, or other evidence appropriate to the
-task.</p>
-<h3 id="6-use-ai-to-learn-not-only-to-obtain-answers">6. Use AI to
-Learn, Not Only to Obtain Answers</h3>
-<p>This is especially important for junior developers. Ask why an
-approach was selected, compare it with alternatives, and predict the
-result before running the code. An agent can be a powerful tutor, but it
-will not teach much if every instruction is simply “implement this and
-tell me when you are done.”</p>
-<h3 id="7-preserve-your-ability-to-work-without-it">7. Preserve Your
-Ability to Work Without It</h3>
-<p>You do not need to reject AI to prove your competence. But you should
-not become unable to debug, read code, or make architectural decisions
-without consulting it. Periodically perform diagnosis and review
-yourself, particularly in critical parts of the system.</p>
-<h3 id="8-do-not-confuse-passing-tests-with-a-correct-product">8. Do Not
-Confuse Passing Tests With a Correct Product</h3>
-<p>Tests prove only what they were designed to verify. Every test can
-pass while the requirement was misunderstood, an important case was
-omitted, or the solution became unnecessarily difficult to maintain.</p>
-<h2 id="accountability-does-not-transfer-to-the-agent">Accountability
-Does Not Transfer to the Agent</h2>
-<p>An agent can write the code, run the tests, prepare the pull request,
-and produce a polished report claiming that the task is complete. It
-will not carry responsibility for a flawed architectural decision. It
-will not explain a data-loss incident to the customer, justify a leaked
-secret to the security team, or maintain a system that nobody inside the
-organization understands.</p>
-<p>Coding tools are improving so quickly that some current measurements
-may become outdated within months. One principle is unlikely to age as
-quickly:</p>
-<aside class="callout"><p><strong>The more execution power you give the tool, the more judgment
-and review discipline you need to retain.</strong></p></aside>
-<p>An agent does not automatically make a good developer worse, and it
-does not transform a junior developer into an expert. It is a force
-multiplier: used deliberately, it amplifies expertise; used without
-oversight, it amplifies ignorance and neglect.</p>
-<p>Use it to increase your speed, not to replace your understanding.
-Only a developer who knows what is happening behind the scenes can
-decide when to trust the agent, when to stop it, and when to discard its
-work and begin again.</p>
-<h2 id="evidence-note">Evidence Note</h2>
-<p>This article relies primarily on research published in 2026. Some
-studies include data collected during 2026, while others analyze
-repositories or review activity from 2025. Several recent coding-agent
-studies are still preprints and have not completed every stage of peer
-review. Their findings should therefore be treated as timely and
-significant evidence, not as final conclusions about every tool,
-developer, or engineering organization.</p>
-</div>
-    <footer class="article-footer"><p><strong>About the author:</strong> Islam Darawsheh is a software architect and technical lead focused on secure, maintainable enterprise systems and responsible AI-enabled engineering.</p><div class="actions"><a class="button" href="/articles/">More articles</a><a class="button" href="/islam-darawsheh/">About Islam</a></div></footer>
-  </article></main>
-  <footer class="site-footer"><div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div></footer>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/islam-darawsheh/">Profile</a>
+        <a href="/articles/">Articles</a>
+        <a href="/#contact">Connect</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="article shell">
+      <header class="article-header">
+        <p class="eyebrow">AI Coding Agents · Developer Skills · Code Review</p>
+        <h1>When the Agent Writes the Code, Are You Still the Developer?</h1>
+        <p class="article-deck">Coding agents can accelerate delivery while creating knowledge debt, weaker skill formation, and shallow review. The real risk is losing ownership of what ships.</p>
+        <div class="article-meta">
+          <span>By Islam Darawsheh</span>
+          <time datetime="2026-09-07">September 7, 2026</time>
+          <span>16 min read</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+        <p class="lead">You ask an AI coding agent to implement what sounds like a small
+        feature. You leave it working for a few minutes and return to find that
+        it has modified twenty files, added a database migration, changed
+        several service registrations, and written a new test suite. It then
+        reports, confidently, that the task is complete and every test has
+        passed.</p>
+        <p>The result looks impressive. But there is a more important question
+        than the number of changed files or the reassuring line of green
+        checks:</p>
+        <p><strong>Do you actually know what happened inside your
+        project?</strong></p>
+        <p>Can you explain the decisions the agent made? Do you know which
+        assumptions shaped its solution? Did you verify that the tests validate
+        the intended behavior, or did you merely notice that they passed? If the
+        feature fails in production next week, will you know where to begin?</p>
+        <p>These questions are not an argument against AI coding agents. Modern
+        agents can save real time and complete work that once took developers
+        hours. However, the transition from an assistant that suggests a few
+        lines of code to an agent that explores a repository, executes commands,
+        edits files, and makes a chain of decisions has changed the nature of
+        the risk.</p>
+        <p>The problem is no longer limited to AI suggesting an incorrect line
+        of code. The new danger is that it can complete an entire sequence of
+        work while the developer gradually loses both an understanding of what
+        happened and genuine ownership of the decisions made.</p>
+        <h2 id="an-agent-is-not-just-smarter-autocomplete">An Agent Is Not Just
+        Smarter Autocomplete</h2>
+        <p>Traditional code completion suggested a function or a few lines while
+        the developer remained inside the implementation process. A modern
+        coding agent can:</p>
+        <ul>
+        <li>Explore the repository and identify files related to the task.</li>
+        <li>Create a plan and execute it across multiple steps.</li>
+        <li>Modify dozens of files in a single session.</li>
+        <li>Run builds, tests, linters, and static-analysis tools.</li>
+        <li>Add dependencies, migrations, and configuration.</li>
+        <li>Detect some of its own failures and attempt new solutions.</li>
+        <li>Declare the task complete without requiring the developer to inspect
+        every step.</li>
+        </ul>
+        <p>That capability is the source of an agent’s value. It is also the
+        source of its risk. The more independently it can operate, the wider the
+        possible gap between what happened in the codebase and what the
+        developer understands about it.</p>
+        <h2 id="the-junior-developers-risk-results-without-a-mental-model">The
+        Junior Developer’s Risk: Results Without a Mental Model</h2>
+        <p>Junior developers have traditionally learned through a repetitive
+        cycle: write something, make a mistake, read the error, investigate it,
+        try another approach, and eventually understand why one solution worked
+        while another failed. That cycle is slow and sometimes painful, but it
+        builds a mental model of the system.</p>
+        <p>An agent can produce a working application without requiring the
+        developer to experience much of that cycle. After a while, the developer
+        may appear capable of delivering complex features even though their
+        ability to read, diagnose, and reason about the system has not developed
+        at the same rate.</p>
+        <p>They can demonstrate the result but may struggle to answer questions
+        such as:</p>
+        <ul>
+        <li>Why was this design selected instead of a simpler alternative?</li>
+        <li>Which dependency-injection lifetime is appropriate here, and
+        why?</li>
+        <li>What happens if two requests reach this code simultaneously?</li>
+        <li>Where does the transaction begin and end?</li>
+        <li>Does this test validate real behavior, or only prove that a mock
+        returned the configured value?</li>
+        <li>Does the solution fit the surrounding architecture, or does it
+        merely work in isolation?</li>
+        </ul>
+        <p>This creates an <strong>illusion of competence</strong>: the
+        developer’s ability to produce professional-looking output rises much
+        faster than their ability to understand it and make independent
+        engineering decisions.</p>
+        <h2
+        id="a-2026-experiment-faster-completion-did-not-mean-better-understanding">A
+        2026 Experiment: Faster Completion Did Not Mean Better
+        Understanding</h2>
+        <p>In January 2026, Anthropic published a randomized controlled trial
+        involving 52 software engineers, most of them junior developers.
+        Participants learned a Python library, completed programming tasks with
+        it, and then took a test covering conceptual understanding, code
+        reading, and debugging.</p>
+        <p>The AI-assisted group completed the practical task about two minutes
+        faster on average, but the speed difference was not statistically
+        significant. The difference in understanding was significant: the AI
+        group scored an average of <strong>50% on the assessment, compared with
+        67% for the group that coded without AI</strong>. The largest gap
+        appeared in debugging questions—the exact skill developers need when
+        generated code is wrong.</p>
+        <p>Importantly, AI use did not produce the same outcome for everyone.
+        Participants who delegated the implementation and debugging directly to
+        AI were among the fastest, but they showed some of the weakest
+        understanding. Those who asked conceptual questions, requested
+        explanations, or checked their understanding after generation retained
+        substantially more knowledge.</p>
+        <p>There is an important limitation: the experiment used an AI assistant
+        inside a coding environment, not a fully autonomous product such as
+        Claude Code or Codex. It therefore does not prove that every coding
+        agent reduces learning. It does, however, provide recent evidence that
+        <strong>the method of delegation</strong> can deliver faster output at
+        the expense of the skills required to evaluate and maintain that output.
+        <a
+        href="https://www.anthropic.com/research/AI-assistance-coding-skills">Anthropic’s
+        study on AI and coding-skill formation</a></p>
+        <h2 id="when-errors-disappear-some-learning-disappears-with-them">When
+        Errors Disappear, Some Learning Disappears With Them</h2>
+        <p>We usually treat errors as wasted time. Yet much of a developer’s
+        expertise is formed while discovering why something failed, not while
+        typing the final correct implementation.</p>
+        <p>A developer who personally investigates a race condition becomes more
+        alert to concurrency risks in the future. Someone who discovers that a
+        stateful service was registered as a singleton rarely forgets the
+        importance of service lifetimes. A developer who ships a bug despite
+        having a green test suite learns the difference between increasing
+        coverage and creating a meaningful safety net.</p>
+        <p>If the agent encounters and resolves all those problems away from the
+        developer’s attention, the product may improve while the knowledge that
+        should have formed during its construction is lost.</p>
+        <p>This does not mean forcing developers to reinvent every solution or
+        banning them from using AI. It means refusing to confuse <strong>task
+        completion</strong> with <strong>skill acquisition</strong>. They are
+        different outcomes, and one can improve while the other
+        deteriorates.</p>
+        <h2 id="experienced-developers-face-a-different-risk">Experienced
+        Developers Face a Different Risk</h2>
+        <p>Experienced developers do not usually lack the fundamentals. Their
+        problem begins when their expertise becomes a reason not to follow the
+        work closely:</p>
+        <blockquote>
+        <p>I know the architecture. If the agent makes a serious mistake, I will
+        catch it later.</p>
+        </blockquote>
+        <p>At first, they delegate repetitive work. Then they delegate an entire
+        feature. Eventually, they allow several agents to process multiple tasks
+        in parallel. As the volume of generated work increases, meaningful
+        review becomes harder. They read the summary, check whether the tests
+        passed, scan selected parts of the diff, and approve the result.</p>
+        <p>The experienced developer does not suddenly lose years of knowledge.
+        Their relationship with the project changes gradually: they move from
+        being the engineer who constructs and understands decisions to the
+        person managing a stream of output produced faster than they can absorb
+        it.</p>
+        <p>Calling this simply “laziness” would be emotionally satisfying but
+        technically incomplete. It is usually a combination of three
+        effects:</p>
+        <ol type="1">
+        <li><strong>Cognitive offloading:</strong> A growing share of reasoning
+        and verification is delegated to the tool.</li>
+        <li><strong>Review fatigue:</strong> The developer must continuously
+        review changes that are too large or too numerous for careful
+        inspection.</li>
+        <li><strong>Automation habituation:</strong> Because the tool’s output
+        is acceptable most of the time, scrutiny gradually becomes less
+        rigorous.</li>
+        </ol>
+        <h2 id="a-2026-study-found-more-approvals-and-less-scrutiny">A 2026
+        Study Found More Approvals and Less Scrutiny</h2>
+        <p>A study published in June 2026 analyzed 11,429 reviews performed by
+        400 people who repeatedly reviewed pull requests created by coding
+        agents over seven months.</p>
+        <p>Approval increased between reviewers’ early and later interactions.
+        When each reviewer’s experience was divided into ten stages, approval
+        rates rose from <strong>27.9% to 42.4%</strong>, while change-request
+        rates fell from 11.2% to 5.6%. At the same time, the number of inline
+        review comments declined by <strong>22%</strong>, and the total number
+        of words in those comments fell by 28%.</p>
+        <p>This pattern is consistent with reviewers becoming habituated to
+        agent output and inspecting it less closely. It does not prove that
+        laziness caused the change; agent quality might also have improved
+        during the observation period. The more defensible conclusion is that
+        the data showed <strong>an increase in approvals accompanied by a
+        measurable reduction in visible review effort</strong>. <a
+        href="https://arxiv.org/abs/2606.22721">Habituation at the Gate</a></p>
+        <p>That distinction matters because assurances about safe agentic
+        development often end with the phrase “a human will remain in the loop.”
+        But placing a human name on the approval does not prove that the person
+        understood the change. The value of review comes from its depth, not
+        merely from its existence.</p>
+        <p>A July 2026 enterprise case study shows how quickly this can become a
+        capacity problem. Across 802 developers and 196,212 pull requests,
+        per-developer throughput eventually reached 2.09 times the pre-mandate
+        baseline. Yet the review load per reviewer also roughly doubled, and
+        automated review overtook human review. The study covered one AI-forward
+        company and adoption was not randomly assigned, so it should not be
+        treated as a universal productivity forecast. It does demonstrate the
+        operational tension clearly: generation can scale faster than careful
+        human inspection. <a href="https://arxiv.org/abs/2607.01904">AI Writes
+        Faster Than Humans Can Review</a></p>
+        <h2 id="does-the-agent-understand-what-we-actually-asked-for">Does the
+        Agent Understand What We Actually Asked For?</h2>
+        <p>An agent can write technically valid code and still complete the
+        wrong task. It may exceed the requested scope, apply what it considers a
+        best practice despite an explicit project decision, or announce success
+        before verifying a critical requirement.</p>
+        <p>A large study published in May 2026 examined <strong>20,574 real
+        coding-agent sessions</strong> across 1,639 repositories. Its data
+        included sessions collected through April 2026 and covered tools such as
+        Claude Code, Cursor, Codex, GitHub Copilot, and OpenCode.</p>
+        <p>Among the detected developer-agent misalignment episodes:</p>
+        <ul>
+        <li>38.33% involved violating a developer constraint.</li>
+        <li>26.95% involved misreading the developer’s intent.</li>
+        <li>22.58% involved inaccurate reporting about progress or
+        completion.</li>
+        <li>17.82% involved a faulty implementation.</li>
+        <li>10.20% involved self-initiated action beyond the requested
+        scope.</li>
+        </ul>
+        <p>Where a visible resolution occurred in the conversation,
+        <strong>91.49% required explicit correction or pushback from the
+        developer</strong>. In other words, the agent did not reliably correct
+        its own direction. It first needed an attentive developer to notice the
+        deviation. <a href="https://arxiv.org/abs/2605.29442">How Coding Agents
+        Fail Their Users</a></p>
+        <p>This brings us back to the central problem: a developer who does not
+        follow what happens behind the scenes may not even realize that the
+        agent implemented a different task, violated a constraint, or declared
+        success without satisfying the requirement.</p>
+        <h2 id="faster-code-can-create-faster-debt">Faster Code Can Create
+        Faster Debt</h2>
+        <p>Agent output is easy to count: files changed, commits created, pull
+        requests opened, or lines written. The complexity and maintenance burden
+        left behind are much harder to measure.</p>
+        <p>In a study published in March 2026, researchers analyzed 304,362
+        verified AI-authored commits across 6,275 GitHub repositories. Static
+        analysis identified 484,606 issues introduced by those changes, with
+        code smells accounting for 89.1% of them. More than 15% of the commits
+        attributed to every studied AI assistant introduced at least one issue,
+        and <strong>24.2% of the tracked issues remained in the latest version
+        of the repository</strong>. <a
+        href="https://arxiv.org/abs/2603.28592">Debt Behind the AI Boom</a></p>
+        <p>Another longitudinal analysis published in January 2026 found that
+        agent adoption produced substantial early velocity gains in some
+        repositories, but little or only temporary additional throughput in
+        projects that had previously used AI-enabled IDEs. In contrast,
+        static-analysis warnings increased by roughly 18%, while cognitive
+        complexity rose by about 35%. <a
+        href="https://arxiv.org/abs/2601.13597">AI IDEs or Autonomous
+        Agents?</a></p>
+        <p>These results do not mean that all agent-generated code is poor, just
+        as human authorship does not guarantee good code. They warn against
+        measuring success by generation speed alone. An agent can create
+        technical debt at the same speed with which it creates features.</p>
+        <h2 id="from-technical-debt-to-knowledge-debt">From Technical Debt to
+        Knowledge Debt</h2>
+        <p>Technical debt exists in the code: excessive coupling, duplication,
+        fragile design, or a temporary workaround that quietly became
+        permanent.</p>
+        <p>Agentic development can produce another kind of liability:
+        <strong>knowledge debt</strong>—the gap between what the system can do
+        and what its maintainers understand about it.</p>
+        <p>Knowledge debt accumulates when:</p>
+        <ul>
+        <li>The agent changes components that nobody reads carefully.</li>
+        <li>Architectural decisions pass unnoticed inside a large diff.</li>
+        <li>The team relies on agent-generated tests to assess agent-generated
+        code.</li>
+        <li>Everyone knows that the solution works, but nobody knows why.</li>
+        <li>Calling another agent becomes the only practical way to understand
+        what the previous agent built.</li>
+        </ul>
+        <p>The project may remain stable for a long time, so the problem does
+        not appear urgent. It surfaces during an incident, a fundamental
+        requirement change, the departure of the developer who supervised the
+        agent, or the tool’s failure to recover the original context. The team
+        then discovers that it owns the code but no longer owns enough knowledge
+        to maintain it confidently.</p>
+        <h2
+        id="the-productivity-gains-are-realbut-they-are-not-the-whole-story">The
+        Productivity Gains Are Real—but They Are Not the Whole Story</h2>
+        <p>A balanced discussion must acknowledge that agents also create real
+        value.</p>
+        <p>In a METR survey conducted between February and April 2026, 349
+        technical workers estimated that AI had increased the value of their
+        work by a median of approximately 1.4 to 2 times. Their median estimated
+        speed increase was threefold. The researchers, however, cautioned that
+        self-reported gains may overstate real-world improvement and that faster
+        execution does not necessarily create an equivalent increase in value.
+        <a href="https://metr.org/blog/2026-05-11-ai-usage-survey/">METR’s 2026
+        technical-worker productivity survey</a></p>
+        <p>A study presented at MSR 2026 also found that human intervention
+        occurred less frequently in agent-authored pull requests than in
+        human-authored ones. When intervention was required, however, it
+        involved longer durations and larger code changes. Guidance-level
+        intervention accounted for 58.02% of the observed human effort,
+        including constraining the agent’s actions and enforcing project
+        conventions. The developer’s work was not eliminated; it shifted from
+        direct implementation toward supervision, guidance, and quality control.
+        <a
+        href="https://2026.msrconf.org/details/msr-2026-mining-challenge/26/Behind-Agentic-Pull-Requests-An-Empirical-Study-on-Developer-Interventions-in-AI-Age">Behind
+        Agentic Pull Requests at MSR 2026</a></p>
+        <p>The right question is therefore not whether agents save time. In many
+        tasks, they clearly do. The better question is:</p>
+        <blockquote>
+        <p><strong>What kind of time did we save, and what responsibility or
+        knowledge did we give up in exchange?</strong></p>
+        </blockquote>
+        <h2 id="how-can-developers-use-agents-without-becoming-spectators">How
+        Can Developers Use Agents Without Becoming Spectators?</h2>
+        <p>The solution is not to return to writing everything manually.
+        Ignoring a tool that can automate repetitive work, explore a large
+        repository, generate initial tests, or create a prototype quickly would
+        make little sense. The goal is to use the agent without surrendering the
+        developer’s role as decision-maker and accountable owner.</p>
+        <h3 id="1-do-not-accept-code-you-cannot-explain">1. Do Not Accept Code
+        You Cannot Explain</h3>
+        <p>You do not need to memorize every line. You should, however, be able
+        to explain the feature’s flow, transaction boundaries, architectural
+        decisions, failure points, and effect on the surrounding system.</p>
+        <h3 id="2-review-decisions-before-reviewing-details">2. Review Decisions
+        Before Reviewing Details</h3>
+        <p>Before inspecting a large diff, ask the agent to state its
+        assumptions, alternatives, and reasons for modifying each area.
+        Excellent syntax review cannot rescue a solution built in the wrong
+        direction.</p>
+        <h3 id="3-keep-changes-small-enough-to-understand">3. Keep Changes Small
+        Enough to Understand</h3>
+        <p>The larger the change, the easier it becomes to hide a bad decision
+        among hundreds of acceptable lines. Give every stage a narrow objective,
+        explicit boundaries, and verifiable acceptance criteria.</p>
+        <h3 id="4-do-not-let-the-agent-be-the-only-witness-to-its-success">4. Do
+        Not Let the Agent Be the Only Witness to Its Success</h3>
+        <p>If the same agent writes the code, creates the tests, runs them, and
+        summarizes the result, then one source controls both implementation and
+        evaluation. Use independent tests, static analysis, human review, and
+        direct execution of important scenarios.</p>
+        <h3 id="5-ask-for-evidence-not-reassurance">5. Ask for Evidence, Not
+        Reassurance</h3>
+        <p>There is a difference between “the problem is fixed” and showing the
+        test that failed before the change and passed afterward. Require command
+        output, behavioral comparisons, or other evidence appropriate to the
+        task.</p>
+        <h3 id="6-use-ai-to-learn-not-only-to-obtain-answers">6. Use AI to
+        Learn, Not Only to Obtain Answers</h3>
+        <p>This is especially important for junior developers. Ask why an
+        approach was selected, compare it with alternatives, and predict the
+        result before running the code. An agent can be a powerful tutor, but it
+        will not teach much if every instruction is simply “implement this and
+        tell me when you are done.”</p>
+        <h3 id="7-preserve-your-ability-to-work-without-it">7. Preserve Your
+        Ability to Work Without It</h3>
+        <p>You do not need to reject AI to prove your competence. But you should
+        not become unable to debug, read code, or make architectural decisions
+        without consulting it. Periodically perform diagnosis and review
+        yourself, particularly in critical parts of the system.</p>
+        <h3 id="8-do-not-confuse-passing-tests-with-a-correct-product">8. Do Not
+        Confuse Passing Tests With a Correct Product</h3>
+        <p>Tests prove only what they were designed to verify. Every test can
+        pass while the requirement was misunderstood, an important case was
+        omitted, or the solution became unnecessarily difficult to maintain.</p>
+        <h2 id="accountability-does-not-transfer-to-the-agent">Accountability
+        Does Not Transfer to the Agent</h2>
+        <p>An agent can write the code, run the tests, prepare the pull request,
+        and produce a polished report claiming that the task is complete. It
+        will not carry responsibility for a flawed architectural decision. It
+        will not explain a data-loss incident to the customer, justify a leaked
+        secret to the security team, or maintain a system that nobody inside the
+        organization understands.</p>
+        <p>Coding tools are improving so quickly that some current measurements
+        may become outdated within months. One principle is unlikely to age as
+        quickly:</p>
+        <blockquote>
+        <p><strong>The more execution power you give the tool, the more judgment
+        and review discipline you need to retain.</strong></p>
+        </blockquote>
+        <p>An agent does not automatically make a good developer worse, and it
+        does not transform a junior developer into an expert. It is a force
+        multiplier: used deliberately, it amplifies expertise; used without
+        oversight, it amplifies ignorance and neglect.</p>
+        <p>Use it to increase your speed, not to replace your understanding.
+        Only a developer who knows what is happening behind the scenes can
+        decide when to trust the agent, when to stop it, and when to discard its
+        work and begin again.</p>
+        <h2 id="evidence-note">Evidence Note</h2>
+        <p>This article relies primarily on research published in 2026. Some
+        studies include data collected during 2026, while others analyze
+        repositories or review activity from 2025. Several recent coding-agent
+        studies are still preprints and have not completed every stage of peer
+        review. Their findings should therefore be treated as timely and
+        significant evidence, not as final conclusions about every tool,
+        developer, or engineering organization.</p>
+        <h2 id="references">References</h2>
+        <ul>
+        <li><a
+        href="https://www.anthropic.com/research/AI-assistance-coding-skills">Anthropic
+        — How AI assistance impacts the formation of coding skills</a></li>
+        <li><a href="https://arxiv.org/abs/2606.22721">Habituation at the Gate:
+        Rising Approval and Declining Scrutiny in Human Review of AI Agent
+        Code</a></li>
+        <li><a href="https://arxiv.org/abs/2607.01904">AI Writes Faster Than
+        Humans Can Review: A Longitudinal Study of an Enterprise 2x
+        Mandate</a></li>
+        <li><a href="https://arxiv.org/abs/2605.29442">How Coding Agents Fail
+        Their Users: A Large-Scale Analysis of Developer-Agent
+        Misalignment</a></li>
+        <li><a href="https://arxiv.org/abs/2603.28592">Debt Behind the AI Boom:
+        A Large-Scale Empirical Study of AI-Generated Code in the Wild</a></li>
+        <li><a href="https://arxiv.org/abs/2601.13597">AI IDEs or Autonomous
+        Agents? Measuring the Impact of Coding Agents on Software
+        Development</a></li>
+        <li><a href="https://metr.org/blog/2026-05-11-ai-usage-survey/">METR —
+        Measuring the Self-Reported Impact of Early-2026 AI on Technical Worker
+        Productivity</a></li>
+        <li><a
+        href="https://2026.msrconf.org/details/msr-2026-mining-challenge/26/Behind-Agentic-Pull-Requests-An-Empirical-Study-on-Developer-Interventions-in-AI-Age">MSR
+        2026 — Behind Agentic Pull Requests</a></li>
+        </ul>
+        
+      </div>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p class="comments-intro">How do you use coding agents without losing understanding, review depth, or ownership of the code?</p>
+        <script src="https://giscus.app/client.js"
+                data-repo="Darawsheh/darawsheh.github.io"
+                data-repo-id="R_kgDOTv89MQ"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOTv89Mc4DC0Gm"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
+      </section>
+
+      <footer class="article-footer">
+        <div>
+          <p class="eyebrow">About the author</p>
+          <h2>Islam Darawsheh</h2>
+          <p>Software Architect and Technical Lead focused on enterprise .NET, secure systems, SaaS platforms, integration-heavy solutions, and maintainable software delivery.</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/articles/">More articles</a>
+          <a class="button" href="https://www.linkedin.com/in/darawsheh/">LinkedIn</a>
+        </div>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div>
+  </footer>
   <script src="../../assets/script.js" defer></script>
   <!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"c49bf167d60b425c9686b4c56244eae8"}'></script><!-- End Cloudflare Web Analytics -->
-</body></html>
+</body>
+</html>
