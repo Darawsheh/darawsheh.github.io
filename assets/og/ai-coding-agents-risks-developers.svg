@@ -1,1 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc"><title id="title">When the Agent Writes the Code, Are You Still the Developer?</title><desc id="desc">Article social card by Islam Darawsheh</desc><rect width="1200" height="630" fill="#111827"/><circle cx="1040" cy="120" r="240" fill="#2563eb" opacity=".22"/><circle cx="112" cy="560" r="190" fill="#14b8a6" opacity=".16"/><text x="90" y="115" fill="#60a5fa" font-family="Arial,sans-serif" font-size="28" font-weight="700">AI CODING AGENTS</text><text x="90" y="230" fill="#f9fafb" font-family="Arial,sans-serif" font-size="58" font-weight="700">When the Agent Writes</text><text x="90" y="302" fill="#f9fafb" font-family="Arial,sans-serif" font-size="58" font-weight="700">the Code, Are You Still</text><text x="90" y="374" fill="#f9fafb" font-family="Arial,sans-serif" font-size="58" font-weight="700">the Developer?</text><line x1="90" y1="448" x2="1110" y2="448" stroke="#334155" stroke-width="2"/><text x="90" y="520" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="27">Understanding · Review · Accountability</text><text x="90" y="572" fill="#94a3b8" font-family="Arial,sans-serif" font-size="23">Islam Darawsheh</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">When the Agent Writes the Code, Are You Still the Developer?</title>
+  <desc id="desc">Islam Darawsheh technical article cover about AI coding agents, developer skills, and human oversight</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="1" stop-color="#1f2937"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" rx="36" fill="url(#bg)"/>
+  <circle cx="1050" cy="115" r="170" fill="#38bdf8" opacity="0.12"/>
+  <circle cx="1030" cy="535" r="220" fill="#a78bfa" opacity="0.10"/>
+  <text x="70" y="92" fill="#93c5fd" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700">AI CODING AGENTS · HUMAN OVERSIGHT</text>
+  <text x="70" y="190" fill="#f8fafc" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700">WHEN THE AGENT</text>
+  <text x="70" y="258" fill="#f8fafc" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700">WRITES THE CODE,</text>
+  <text x="70" y="326" fill="#f8fafc" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700">WHO OWNS IT?</text>
+  <rect x="70" y="382" width="760" height="3" fill="#38bdf8" opacity="0.8"/>
+  <text x="70" y="445" fill="#cbd5e1" font-family="Arial, Helvetica, sans-serif" font-size="27">Learning · Review depth · Knowledge debt · Accountability</text>
+  <text x="70" y="585" fill="#b8c5d8" font-family="Arial, Helvetica, sans-serif" font-size="22">Islam Darawsheh • darawsheh.github.io/articles</text>
+</svg>
