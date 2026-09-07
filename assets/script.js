@@ -29,6 +29,13 @@
 
   const articles = [
     {
+      slug: 'ai-coding-agents-risks-developers',
+      title: 'When the Agent Writes the Code, Are You Still the Developer?',
+      description: '2026 research on skill formation, review habituation, agent misalignment, technical debt, and accountable use of coding agents.',
+      published: '2026-09-07'
+    },
+  const articles = [
+    {
       slug: 'mcp-dotnet-build-mcp-server-csharp',
       title: 'MCP in .NET: What It Actually Solves and How to Build an MCP Server in C#',
       description: 'MCP architecture, ASP.NET Core tools, SDK 2.0 stateless HTTP, MRTR, security, Clean Architecture, and when a normal API is still better.',

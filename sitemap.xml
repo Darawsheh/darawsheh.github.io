@@ -2,19 +2,19 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://darawsheh.github.io/</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-07</lastmod>
   </url>
   <url>
     <loc>https://darawsheh.github.io/islam-darawsheh/</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-07</lastmod>
   </url>
   <url>
     <loc>https://darawsheh.github.io/articles/</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-07</lastmod>
   </url>
   <url>
     <loc>https://darawsheh.github.io/articles/mcp-dotnet-build-mcp-server-csharp/</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-07</lastmod>
   </url>
   <url>
     <loc>https://darawsheh.github.io/articles/dotnet-11-9-new-features-that-actually-matter/</loc>
@@ -39,5 +39,9 @@
   <url>
     <loc>https://darawsheh.github.io/articles/clean-architecture-vs-ddd/</loc>
     <lastmod>2026-08-07</lastmod>
+  </url>
+  <url>
+    <loc>https://darawsheh.github.io/articles/ai-coding-agents-risks-developers/</loc>
+    <lastmod>2026-09-07</lastmod>
   </url>
 </urlset>

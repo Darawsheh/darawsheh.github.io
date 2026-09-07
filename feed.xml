@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>When the Agent Writes the Code, Are You Still the Developer?</title>
+      <link>https://darawsheh.github.io/articles/ai-coding-agents-risks-developers/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/ai-coding-agents-risks-developers/</guid>
+      <pubDate>Mon, 07 Sep 2026 00:00:00 GMT</pubDate>
+      <description>AI coding agents can accelerate delivery, but without disciplined oversight they can weaken developer understanding, review quality, and ownership.</description>
+    </item>
+    <item>
       <title>MCP in .NET: What It Actually Solves and How to Build an MCP Server in C#</title>
       <link>https://darawsheh.github.io/articles/mcp-dotnet-build-mcp-server-csharp/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/mcp-dotnet-build-mcp-server-csharp/</guid>
