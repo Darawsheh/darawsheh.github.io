@@ -119,7 +119,7 @@
 <p>Consider an equipment request with attachments, eligibility rules, and a manager’s approval.</p>
 <p>The agent can interpret an employee’s description, identify missing information, and prepare a submission. The application determines whether the employee may submit it, which approval path applies, and whether a state transition is valid.</p>
 <p>That distinction gives each part of the system a clear responsibility:</p>
-<div class="table-wrap" role="region" aria-label="Responsibility by task" tabindex="0"><div class="table-wrap" role="region" aria-label="Production evaluation cases" tabindex="0"><div class="table-wrap" role="region" aria-label="Proposed application components" tabindex="0"><table>
+<div class="table-wrap" role="region" aria-label="Responsibility by task" tabindex="0"><table>
 <colgroup>
 <col style="width: 50%" />
 <col style="width: 50%" />
@@ -212,7 +212,7 @@
 <h2 id="test-the-outcome-and-the-route-taken">Test the outcome and the route taken</h2>
 <p>Anthropic’s January 2026 evaluation guidance distinguishes an agent’s transcript from the resulting state of its environment. It also recommends repeated trials because behavior can vary between runs. <a href="#source-10">[10]</a></p>
 <p>For this request assistant, I would start with the following evaluation cases:</p>
-<table>
+<div class="table-wrap" role="region" aria-label="Production evaluation cases" tabindex="0"><table>
 <colgroup>
 <col style="width: 50%" />
 <col style="width: 50%" />
@@ -263,7 +263,7 @@
 <p>A passing run should satisfy the business outcome and its constraints. Repeat representative cases, preserve a holdout set, and rerun evaluations when changing models, prompts, tools, or retrieval behavior. A successful demonstration supplies a test case, not a reliability estimate.</p>
 <h2 id="start-with-a-small-deployment-boundary">Start with a small deployment boundary</h2>
 <p>For a .NET team, I would keep the first version close to the existing application architecture:</p>
-<table>
+<div class="table-wrap" role="region" aria-label="Proposed application components" tabindex="0"><table>
 <colgroup>
 <col style="width: 50%" />
 <col style="width: 50%" />
