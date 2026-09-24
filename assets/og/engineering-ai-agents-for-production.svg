@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Beyond the Prompt: Engineering AI Agents for Production</title>
+  <desc id="desc">Islam Darawsheh technical article cover about production AI agents, architecture, and reliability</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="1" stop-color="#1f2937"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" rx="36" fill="url(#bg)"/>
+  <circle cx="1050" cy="115" r="170" fill="#38bdf8" opacity="0.12"/>
+  <circle cx="1030" cy="535" r="220" fill="#a78bfa" opacity="0.10"/>
+  <text x="70" y="92" fill="#93c5fd" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700">AI AGENTS · SOFTWARE ARCHITECTURE</text>
+  <text x="70" y="190" fill="#f8fafc" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700">BEYOND THE PROMPT</text>
+  <text x="70" y="258" fill="#f8fafc" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700">ENGINEERING AI AGENTS</text>
+  <text x="70" y="326" fill="#f8fafc" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700">FOR PRODUCTION</text>
+  <rect x="70" y="382" width="760" height="3" fill="#38bdf8" opacity="0.8"/>
+  <text x="70" y="445" fill="#cbd5e1" font-family="Arial, Helvetica, sans-serif" font-size="27">Authority · Durable state · Safe recovery · Evidence</text>
+  <text x="70" y="585" fill="#b8c5d8" font-family="Arial, Helvetica, sans-serif" font-size="22">Islam Darawsheh • darawsheh.github.io/articles</text>
+</svg>

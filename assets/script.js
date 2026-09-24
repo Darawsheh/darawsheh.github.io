@@ -29,6 +29,12 @@
 
   const articles = [
     {
+      slug: 'engineering-ai-agents-for-production',
+      title: 'Beyond the Prompt: Engineering AI Agents for Production',
+      description: 'Build reliable AI agents with scoped tools, durable workflows, approval controls, safe retries, and outcome-based evaluations. A practical .NET architecture.',
+      published: '2026-09-24'
+    },
+    {
       slug: 'ai-coding-agents-risks-developers',
       title: 'When the Agent Writes the Code, Are You Still the Developer?',
       description: 'AI coding agents can accelerate delivery, but they can weaken junior developers’ learning and turn experienced engineers into passive reviewers.',
