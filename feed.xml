@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>TokenOps: The Missing Discipline for AI Agents in Production</title>
+      <link>https://darawsheh.github.io/articles/tokenops-ai-agents-production/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/tokenops-ai-agents-production/</guid>
+      <pubDate>Thu, 08 Oct 2026 07:10:00 GMT</pubDate>
+      <description>Control AI agent token usage with run-level attribution, budgets, and enforcement. A practical TokenOps guide with observability and C# accounting.</description>
+    </item>
+    <item>
       <title>Beyond the Prompt: Engineering AI Agents for Production</title>
       <link>https://darawsheh.github.io/articles/engineering-ai-agents-for-production/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/engineering-ai-agents-for-production/</guid>
