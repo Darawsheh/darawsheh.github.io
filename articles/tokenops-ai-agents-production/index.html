@@ -446,7 +446,7 @@ public sealed class RunBudget
 {
     private sealed record Entry(long UpperBound, long? Actual = null);
 
-    private readonly object _gate = new();
+    private readonly System.Threading.Lock _gate = new();
     private readonly long _limit;
     private readonly Dictionary&lt;Guid, Entry&gt; _calls = new();
     // Includes settled usage and outstanding upper-bound reservations.
