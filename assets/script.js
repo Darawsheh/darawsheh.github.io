@@ -29,6 +29,12 @@
 
   const articles = [
     {
+      slug: 'tokenops-ai-agents-production',
+      title: 'TokenOps: The Missing Discipline for AI Agents in Production',
+      description: 'Control AI agent token usage with run-level attribution, budgets, and enforcement. A practical TokenOps guide with observability and C# accounting.',
+      published: '2026-10-08'
+    },
+    {
       slug: 'engineering-ai-agents-for-production',
       title: 'Beyond the Prompt: Engineering AI Agents for Production',
       description: 'Build reliable AI agents with scoped tools, durable workflows, approval controls, safe retries, and outcome-based evaluations. A practical .NET architecture.',

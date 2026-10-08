@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TokenOps: The Missing Discipline for AI Agents in Production | Islam Darawsheh</title>
+  <meta name="description" content="Control AI agent token usage with run-level attribution, budgets, and enforcement. A practical TokenOps guide with observability and C# accounting.">
+  <meta name="author" content="Islam Darawsheh">
+  <meta name="robots" content="index,follow">
+  <meta name="keywords" content="AI Agents, TokenOps, LLMOps, .NET, Cost Control">
+  <meta name="theme-color" content="#111827">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <link rel="canonical" href="https://darawsheh.github.io/articles/tokenops-ai-agents-production/">
+  <link rel="alternate" type="application/rss+xml" title="Islam Darawsheh Articles" href="/feed.xml">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/article.css">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Islam Darawsheh">
+  <meta property="og:title" content="TokenOps: The Missing Discipline for AI Agents in Production">
+  <meta property="og:description" content="Production AI agents need more than billing dashboards: observe each run, attribute its cost, enforce budgets, and measure accepted outcomes.">
+  <meta property="og:url" content="https://darawsheh.github.io/articles/tokenops-ai-agents-production/">
+  <meta property="og:image" content="https://darawsheh.github.io/assets/og/tokenops-ai-agents-production.svg">
+  <meta property="og:image:alt" content="TokenOps: The Missing Discipline for AI Agents in Production">
+  <meta property="article:published_time" content="2026-10-08">
+  <meta property="article:author" content="Islam Darawsheh">
+  <meta property="article:tag" content="AI Agents">
+  <meta property="article:tag" content="TokenOps">
+  <meta property="article:tag" content=".NET">
+  <meta property="article:tag" content="LLMOps">
+  <meta property="article:tag" content="Cost Control">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TokenOps: The Missing Discipline for AI Agents in Production">
+  <meta name="twitter:description" content="Production AI agents need more than billing dashboards: observe each run, attribute its cost, enforce budgets, and measure accepted outcomes.">
+  <meta name="twitter:image" content="https://darawsheh.github.io/assets/og/tokenops-ai-agents-production.svg">
+  <meta name="twitter:image:alt" content="TokenOps: The Missing Discipline for AI Agents in Production">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "TokenOps: The Missing Discipline for AI Agents in Production",
+    "description": "Control AI agent token usage with run-level attribution, budgets, and enforcement. A practical TokenOps guide with observability and C# accounting.",
+    "datePublished": "2026-10-08",
+    "dateModified": "2026-10-08",
+    "author": {
+      "@id": "https://darawsheh.github.io/islam-darawsheh/#person",
+      "@type": "Person",
+      "name": "Islam Darawsheh",
+      "url": "https://darawsheh.github.io/islam-darawsheh/",
+      "sameAs": [
+        "https://github.com/Darawsheh",
+        "https://www.linkedin.com/in/darawsheh/"
+      ]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Islam Darawsheh"
+    },
+    "mainEntityOfPage": "https://darawsheh.github.io/articles/tokenops-ai-agents-production/",
+    "keywords": [
+      "AI Agents",
+      "TokenOps",
+      ".NET",
+      "LLMOps",
+      "Cost Control"
+    ],
+    "url": "https://darawsheh.github.io/articles/tokenops-ai-agents-production/",
+    "image": [
+      "https://darawsheh.github.io/assets/og/tokenops-ai-agents-production.svg"
+    ],
+    "isPartOf": {
+      "@type": "Blog",
+      "@id": "https://darawsheh.github.io/articles/",
+      "name": "Islam Darawsheh Articles"
+    },
+    "wordCount": 3487,
+    "inLanguage": "en",
+    "timeRequired": "PT18M"
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to article</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/islam-darawsheh/">Profile</a>
+        <a href="/articles/">Articles</a>
+        <a href="/#contact">Connect</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="article shell">
+      <header class="article-header">
+        <p class="eyebrow">AI Agents · TokenOps · .NET</p>
+        <h1>TokenOps: The Missing Discipline for AI Agents in Production</h1>
+        <p class="article-deck">Production AI agents need more than billing dashboards: observe each run, attribute its cost, enforce budgets, and measure accepted outcomes.</p>
+        <div class="article-meta">
+          <span>By Islam Darawsheh</span>
+          <time datetime="2026-10-08">October 8, 2026</time>
+          <span>18 min read</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+<p class="lead">An AI agent receives a simple request: find the failed payment, check
+the customer record, ask a second service for its status, and explain
+what happened.</p>
+<p>The first model call is inexpensive. The database lookup returns an
+incomplete result. The agent asks a tool again. A retry fails. A second
+agent is invoked to investigate. The original conversation, tool
+results, and growing scratchpad are sent back to the model on every
+turn.</p>
+<p>Nothing looks alarming when viewed one call at a time.</p>
+<p>The complete run is different. It may have consumed hundreds of
+thousands of input and output tokens, several tool calls, and more time
+than the business problem justified. The monthly provider invoice may
+tell you that the team spent more this month, but it may not tell you
+which run caused the increase, whether the cost produced a successful
+outcome, or where the loop should have stopped.</p>
+<p>This is the problem TokenOps is trying to name.</p>
+<p>In this article, I use TokenOps as an emerging label for observing,
+attributing, budgeting, enforcing, and improving token consumption
+across AI applications and agent workflows. It is not a universally
+defined standard. The useful idea is more concrete than the label: token
+usage needs an operational control loop, not just a billing report.</p>
+<p>Microsoft's August 2026 article uses TokenOps as the name of a
+specific open-source system for run-scoped cost control; the broader
+operating practices discussed here are not that project's specification.
+For many hosted LLM APIs, tokens are a primary billing unit, although
+some products meter credits or action units instead. OpenTelemetry's
+GenAI conventions provide building blocks for tracing agent invocations,
+model calls, tool executions, and usage. These are useful starting
+points for the design below. <a href="#source-1">[1]</a><a href="#source-2">[2]</a></p>
+<h2 id="where-tokenops-fits">Where TokenOps fits</h2>
+<p>The names around AI operations overlap, so it helps to define the
+boundary used in this article:</p>
+<div class="table-wrap" role="region" aria-label="TokenOps comparison 1" tabindex="0">
+<table>
+<thead>
+<tr class="header">
+<th>Discipline</th>
+<th>Primary concern</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>AIOps</td>
+<td>Applying AI to IT operations such as alert correlation, incident
+analysis, and remediation</td>
+</tr>
+<tr class="even">
+<td>LLMOps</td>
+<td>Deploying, evaluating, monitoring, and maintaining LLM applications
+and model workflows</td>
+</tr>
+<tr class="odd">
+<td>FinOps</td>
+<td>Managing and allocating cloud or technology spend across teams and
+workloads</td>
+</tr>
+<tr class="even">
+<td>TokenOps</td>
+<td>Managing model usage at the agent-run level through attribution,
+optimization, budgets, and enforcement</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>These are complementary, not competing labels. TokenOps can be
+implemented as part of an LLMOps platform, reported through FinOps, and
+used by an AIOps workflow that calls an agent to investigate an
+incident.</p>
+<h2 id="tokenops-is-not-just-cheaper-prompts">TokenOps is not just
+cheaper prompts</h2>
+<p>The first response to rising token usage is usually prompt
+optimization: shorten the system prompt, remove redundant instructions,
+or choose a smaller model. Those actions can help, but they solve only
+one part of the problem.</p>
+<p>An agent's consumption is a property of the entire workflow. It
+depends on:</p>
+<div class="table-wrap" role="region" aria-label="TokenOps comparison 2" tabindex="0">
+<table>
+<thead>
+<tr class="header">
+<th>Source of consumption</th>
+<th>Typical failure mode</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Input context</td>
+<td>The same large history or retrieved documents are sent on every
+turn</td>
+</tr>
+<tr class="even">
+<td>Output generation</td>
+<td>The model produces long explanations when a structured answer would
+be enough</td>
+</tr>
+<tr class="odd">
+<td>Retries</td>
+<td>A failed tool call causes the same expensive reasoning step to run
+again</td>
+</tr>
+<tr class="even">
+<td>Tool results</td>
+<td>A connector returns far more data than the agent needs</td>
+</tr>
+<tr class="odd">
+<td>Delegation</td>
+<td>Multiple agents repeat overlapping research or validation</td>
+</tr>
+<tr class="even">
+<td>Model selection</td>
+<td>A high-cost model is used for classification or formatting</td>
+</tr>
+<tr class="odd">
+<td>Unbounded loops</td>
+<td>The agent keeps trying because no shared run budget can stop it</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The last two are architectural problems, not wording problems. A
+shorter prompt does not prevent a retry storm. A cheaper model does not
+make an infinite loop acceptable.</p>
+<p>This is why TokenOps should be viewed as a companion to application
+engineering. It asks questions such as:</p>
+<ul>
+<li>How much did this workflow spend before it produced a successful
+result?</li>
+<li>Which user, team, repository, or business process owns that
+spend?</li>
+<li>How much of it was productive work, and how much came from retries
+or duplicated context?</li>
+<li>What should happen when the run reaches its budget?</li>
+<li>Can the system stop the next model call before it is sent?</li>
+</ul>
+<h2 id="the-invoice-is-too-late">The invoice is too late</h2>
+<p>A monthly budget is useful for financial planning, but it is a weak
+runtime safety mechanism. It can notify a team that a limit was crossed;
+it usually cannot explain which live run should stop before the next
+call.</p>
+<p>Per-request limits are also incomplete. An agent can remain under a
+limit on every individual call while exceeding the business value of the
+complete workflow. Ten calls that each cost a small amount can still be
+wasteful when the same failed step is repeated ten times.</p>
+<p>The unit that needs a budget is often the <strong>run</strong>:</p>
+<pre class="text"><code>User request
+  └── Agent run
+      ├── Model call
+      ├── Tool call
+      ├── Model call
+      ├── Retry
+      └── Delegated agent
+          └── Model call</code></pre>
+<p>For a multi-agent workflow, I would give the run one shared budget
+even when several workers or sub-agents participate. If each component
+receives its own independent allowance, the workflow can multiply its
+intended spend simply by multiplying the number of components.</p>
+<p>That does not mean every run should have one fixed number. A short
+classification task, an incident investigation, and a code-generation
+workflow have different value and complexity. The budget should be
+attached to the workflow and business action, not copied blindly across
+every agent.</p>
+<h2 id="four-responsibilities-of-a-practical-tokenops-system">Four
+responsibilities of a practical TokenOps system</h2>
+<p>I would separate TokenOps into four responsibilities. They can start
+inside one application; they do not require four separate services.</p>
+<h3 id="1-observe">1. Observe</h3>
+<p>Record the complete chain of work, not only the final answer. At
+minimum, a trace should connect:</p>
+<ul>
+<li>The user request and workflow name.</li>
+<li>The agent run ID.</li>
+<li>Every model invocation and selected model.</li>
+<li>Input and output token counts, plus cached and reasoning breakdowns
+when available.</li>
+<li>Tool calls, results, failures, and retries.</li>
+<li>Delegated agent runs.</li>
+<li>Duration and time to first token where relevant.</li>
+<li>The final business outcome.</li>
+</ul>
+<p>OpenTelemetry's GenAI conventions include <code>invoke_agent</code>,
+<code>chat</code>, and <code>execute_tool</code> spans. They also define
+usage attributes such as <code>gen_ai.usage.input_tokens</code> and
+<code>gen_ai.usage.output_tokens</code>, alongside the
+<code>gen_ai.client.token.usage</code> metric described in the
+OpenTelemetry walkthrough. Using common names matters because it allows
+an engineering team to change dashboards and telemetry backends without
+redesigning the application's business events. <a href="#source-2">[2]</a></p>
+<p>The agent-span conventions are marked as being in development, so
+teams should pin the schema version they use and expect the conventions
+to evolve. <a href="#source-6">[6]</a></p>
+<p>Telemetry must be designed carefully. Prompts, tool results, and
+attachments may contain personal or confidential data. Full content
+capture should be opt-in, access-controlled, and subject to retention
+rules. TokenOps should improve operational visibility without turning
+the tracing system into an uncontrolled copy of the company's data.</p>
+<h3 id="2-attribute">2. Attribute</h3>
+<p>A provider invoice normally answers “how much did the organization
+spend?” It rarely answers “which business outcome consumed that
+spend?”</p>
+<p>Every model call should inherit a stable run context, such as:</p>
+<pre class="text"><code>organization = finance
+application = expense-assistant
+workflow = disputed-payment-investigation
+run_id = 01J...
+initiating_user = user-1842
+parent_run_id = optional-delegated-run</code></pre>
+<p>The exact fields depend on privacy and tenancy requirements. The
+principle is that cost and usage must be attributable at the same grain
+at which the team makes decisions.</p>
+<p>For a business application, useful aggregates might include:</p>
+<div class="table-wrap" role="region" aria-label="TokenOps comparison 3" tabindex="0">
+<table>
+<thead>
+<tr class="header">
+<th>Question</th>
+<th>Useful measure</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Is the workflow economically useful?</td>
+<td>Cost per successful task</td>
+</tr>
+<tr class="even">
+<td>Is the agent looping?</td>
+<td>Tokens and attempts per run</td>
+</tr>
+<tr class="odd">
+<td>Is context too large?</td>
+<td>Input tokens by step and cache-hit ratio</td>
+</tr>
+<tr class="even">
+<td>Are tools causing waste?</td>
+<td>Tokens after failed or empty tool results</td>
+</tr>
+<tr class="odd">
+<td>Which model is appropriate?</td>
+<td>Success rate and cost by model and task type</td>
+</tr>
+<tr class="even">
+<td>Which team owns the issue?</td>
+<td>Spend by application, workflow, and owner</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Cost should be calculated from the actual model and billing
+arrangement, not inferred from token count alone. Price cached and
+noncached input at the applicable rates, and include relevant output,
+tool, and infrastructure charges. Microsoft distinguishes measured usage
+and cost estimates from the final invoice. <a href="#source-3">[3]</a></p>
+<p>Normalize usage at the provider adapter: cached input is commonly a
+subset of total input, and reasoning usage may already be included in
+total output. Do not add those breakdowns to the totals again. Missing
+usage means unknown, not zero, and must remain visible as an accounting
+gap. <a href="#source-3">[3]</a></p>
+<p>For this workflow, I would define cost per accepted outcome as total
+cost of all attempts for a defined task cohort divided by the number of
+accepted outcomes in that cohort. Include failed attempts and retries in
+the numerator; define acceptance using the business result rather than
+the agent's final message. With zero accepted outcomes, report the cost
+and zero completions rather than a misleading unit cost. If costs are
+incomplete, label the measure provisional.</p>
+<h3 id="3-optimize">3. Optimize</h3>
+<p>Optimization should begin with the largest source of avoidable work,
+not with a general instruction to “use fewer tokens.”</p>
+<p>I would investigate in this order:</p>
+<ol type="1">
+<li>Repeated calls caused by retries or a tool that returns an unusable
+result.</li>
+<li>Context that is re-sent but no longer relevant.</li>
+<li>Tool responses that should have been filtered, paginated, or
+summarized before reaching the model.</li>
+<li>A model whose capability exceeds the task's requirement.</li>
+<li>Delegated work that overlaps with work already completed.</li>
+<li>Output that is longer than the consuming application needs.</li>
+</ol>
+<p>The correct optimization may be a database query, a schema change, a
+cache, a timeout, or a deterministic rule. It is not always a prompt
+rewrite.</p>
+<p>There is also a quality tradeoff. A cheaper run that produces an
+incorrect approval, misses a security issue, or requires a human to redo
+the work is not necessarily more efficient. The meaningful metric is
+closer to <strong>cost per accepted outcome</strong> than cost per
+response.</p>
+<h3 id="4-enforce">4. Enforce</h3>
+<p>Observability tells us that a run is expensive. Enforcement
+determines what happens before the next expensive call.</p>
+<p>A budget policy might contain:</p>
+<pre class="json"><code>{
+  &quot;workflow&quot;: &quot;disputed-payment-investigation&quot;,
+  &quot;maxInputTokens&quot;: 180000,
+  &quot;maxOutputTokens&quot;: 30000,
+  &quot;maxModelCalls&quot;: 24,
+  &quot;maxToolCalls&quot;: 40,
+  &quot;maxElapsedTime&quot;: &quot;00:05:00&quot;,
+  &quot;onExhausted&quot;: &quot;save-and-escalate&quot;
+}</code></pre>
+<p>These are example controls, not universal values. A production policy
+should define whether cached tokens count toward the limit and whether
+delegated work shares the parent budget. Every retry needs its own
+admission against the remaining allowance; a provider error does not
+create extra budget. Compaction, summarization, and escalation messages
+that call a model consume budget too.</p>
+<p>The enforcement point must be outside the model's control. A
+model-generated message saying “the budget is still available” is not a
+budget check. The service responsible for making the next model or tool
+call must consult the authoritative run ledger and make a deterministic
+allow, reduce, or stop decision.</p>
+<p>Microsoft's Agent Framework and Agent Governance Toolkit overview
+describes tiered budget enforcement, including per-task limits,
+per-agent budgets, organization-wide caps, throttling, and a kill
+switch. That is an implementation direction, not proof that a package
+automatically solves every application's policy or billing problem.
+<a href="#source-4">[4]</a></p>
+<p>Token limits and dollar-denominated budgets answer different
+questions. A token limit can stop a run before it grows beyond its
+execution allowance; a financial budget governs spending across models,
+providers, and billing arrangements. A production system may need both.
+<a href="#source-7">[7]</a></p>
+<h2 id="a-small-net-enforcement-boundary">A small .NET enforcement
+boundary</h2>
+<p>A strict token cap needs more than a running total. Before dispatch,
+reserve an upper bound for the complete model call: bounded input plus a
+provider-enforced output limit, including reasoning tokens where
+applicable. An average-use estimate supports planning, not a hard
+guarantee.</p>
+<p>Here is an in-memory, single-run accounting example. The host assigns
+a stable call ID before dispatch; the class tracks reservations and
+makes repeated settlement safe. It is not an SDK integration or a
+distributed ledger.</p>
+<pre class="csharp"><code>using System;
+using System.Collections.Generic;
+
+public sealed class RunBudget
+{
+    private sealed record Entry(long UpperBound, long? Actual = null);
+
+    private readonly object _gate = new();
+    private readonly long _limit;
+    private readonly Dictionary&lt;Guid, Entry&gt; _calls = new();
+    // Includes settled usage and outstanding upper-bound reservations.
+    private decimal _committed;
+    private bool _halted;
+
+    public RunBudget(long limit)
+    {
+        if (limit &lt;= 0)
+            throw new ArgumentOutOfRangeException(nameof(limit));
+        _limit = limit;
+    }
+
+    public bool TryReserve(Guid callId, long upperBound)
+    {
+        if (callId == Guid.Empty)
+            throw new ArgumentException(&quot;A call ID is required.&quot;, nameof(callId));
+        if (upperBound &lt;= 0)
+            throw new ArgumentOutOfRangeException(nameof(upperBound));
+
+        lock (_gate)
+        {
+            if (_halted || _calls.ContainsKey(callId) ||
+                _committed + upperBound &gt; _limit)
+                return false;
+
+            _calls.Add(callId, new Entry(upperBound));
+            _committed += upperBound;
+            return true;
+        }
+    }
+
+    public void Reconcile(Guid callId, long actualTokens)
+    {
+        if (actualTokens &lt; 0)
+            throw new ArgumentOutOfRangeException(nameof(actualTokens));
+
+        lock (_gate)
+        {
+            if (!_calls.TryGetValue(callId, out var entry))
+                throw new InvalidOperationException(&quot;Unknown reservation.&quot;);
+
+            if (entry.Actual is long previous)
+            {
+                if (previous != actualTokens)
+                    throw new InvalidOperationException(&quot;Conflicting settlement.&quot;);
+                return; // Identical replay does not change the balance.
+            }
+
+            _calls[callId] = entry with { Actual = actualTokens };
+            _committed += (decimal)actualTokens - entry.UpperBound;
+            if (actualTokens &gt; entry.UpperBound)
+                _halted = true; // Record the overrun; deny future admissions.
+        }
+    }
+}</code></pre>
+<p>If two calls reserve 60 and 40 tokens against a 100-token limit, a
+third reservation is refused until confirmed usage frees capacity.
+Settling the first call at 20 tokens twice frees 40 tokens only once.
+Negative bounds and negative usage are rejected. The decimal accumulator
+avoids overflowing a <code>long</code> addition while recording an
+unexpected overrun.</p>
+<p>The guarantee is conditional: actual usage must fit the reserved
+bound, and every billable call must pass through this boundary. If a
+supposedly bounded call reports more usage, the class records it and
+halts future admissions; it cannot undo the already-incurred expense or
+cancel other in-flight calls. Production monitoring must flag that
+accounting breach.</p>
+<p>The adapter must enforce the same output ceiling at the provider,
+bound all billable input, and normalize reported usage before
+settlement. Hidden provider work or an unenforceable reasoning/output
+ceiling means the policy is a best-effort guard, not a strict cap. This
+token-only example does not implement the earlier policy's separate
+input/output quotas, call limits, elapsed-time limit, tool charges, or
+dollar budget.</p>
+<p>For multiple workers, persist the call ID, reservation, actual usage,
+and halt state in one authoritative store. Admission and settlement must
+each be atomic across all workers. A duplicate call ID must not dispatch
+another provider request. In production, return distinct rejection
+reasons rather than treating every <code>false</code> as budget
+exhaustion.</p>
+<p>A timeout after dispatch, missing usage, cancellation, or a worker
+crash leaves the reservation outstanding. Do not settle it as zero or
+release it just because a timer expired. Reconcile from provider
+evidence or an explicit conservative accounting policy, and resolve an
+unknown outcome before blindly dispatching a replacement. An
+authoritative ledger must survive restarts; sampled traces are
+diagnostic evidence, not the balance used for enforcement.</p>
+<h3 id="test-the-accounting-before-connecting-a-model">Test the
+accounting before connecting a model</h3>
+<p>These are required acceptance cases for the proposed design, not
+claims that a deployed integration has passed them:</p>
+<div class="table-wrap" role="region" aria-label="TokenOps comparison 4" tabindex="0">
+<table>
+<thead>
+<tr class="header">
+<th>Case</th>
+<th>Required result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Concurrent admissions consume the remainder</td>
+<td>Atomic reservations; committed tokens stay within the cap when
+bounds hold</td>
+</tr>
+<tr class="even">
+<td>Same call ID is admitted twice</td>
+<td>No second reservation or provider dispatch</td>
+</tr>
+<tr class="odd">
+<td>Identical settlement is replayed</td>
+<td>No second balance adjustment</td>
+</tr>
+<tr class="even">
+<td>Settlement has a different usage value</td>
+<td>Conflict surfaced; original settlement preserved</td>
+</tr>
+<tr class="odd">
+<td>Negative values or arithmetic boundary values</td>
+<td>Invalid values rejected; no counter wraparound</td>
+</tr>
+<tr class="even">
+<td>Actual usage exceeds its reserved bound</td>
+<td>Actual usage recorded, breach alerted, future calls denied</td>
+</tr>
+<tr class="odd">
+<td>Provider timeout or missing usage</td>
+<td>Reservation remains outstanding; outcome marked unknown</td>
+</tr>
+<tr class="even">
+<td>Worker restarts</td>
+<td>Reservation, halt state, and deduplication survive in the persistent
+ledger</td>
+</tr>
+<tr class="odd">
+<td>Budget service is unavailable</td>
+<td>Strict-policy admission fails closed before dispatch</td>
+</tr>
+<tr class="even">
+<td>Provider output limit is reached</td>
+<td>Real adapter enforces the configured cap, including relevant
+reasoning usage</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The in-memory class illustrates only the local accounting rules.
+Restart, cross-process concurrency, provider limits, and failure
+handling need tests against the actual store and model adapter.</p>
+<h2 id="token-budgets-are-also-reliability-controls">Token budgets are
+also reliability controls</h2>
+<p>It is tempting to classify TokenOps as a finance feature. That is too
+narrow.</p>
+<p>An agent that loops consumes time, increases latency, occupies worker
+capacity, and may repeat side effects. A budget exhaustion event is
+often an early warning of a broken tool contract, poor retrieval, an
+invalid state transition, or a missing stop condition.</p>
+<p>OWASP lists Unbounded Consumption among the risks for LLM
+applications. The risk includes resource exhaustion, denial of service,
+and unexpected economic impact. A run-level token budget is one layer of
+defense, alongside rate limits, authentication, tool authorization,
+timeouts, and safe handling of external content. <a href="#source-5">[5]</a></p>
+<p>The response to exhaustion should be designed like any other
+application failure:</p>
+<div class="table-wrap" role="region" aria-label="TokenOps comparison 5" tabindex="0">
+<table>
+<thead>
+<tr class="header">
+<th>Exhaustion cause</th>
+<th>Safe response</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Context too large</td>
+<td>Summarize, retrieve selectively, or ask for clarification</td>
+</tr>
+<tr class="even">
+<td>Repeated tool failure</td>
+<td>Stop, save the failure, and escalate with the failing
+dependency</td>
+</tr>
+<tr class="odd">
+<td>Output too verbose</td>
+<td>Retry with a structured schema only if the remaining budget allows
+it</td>
+</tr>
+<tr class="even">
+<td>Parallel work exceeded allowance</td>
+<td>Cancel future work and preserve completed evidence</td>
+</tr>
+<tr class="odd">
+<td>Business task is too complex</td>
+<td>Move to a human or asynchronous workflow</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The user should see a truthful status such as “The investigation
+stopped after reaching its safety budget.” They should not receive
+“completed” merely because the model generated a final paragraph.</p>
+<h2 id="what-tokenops-should-not-become">What TokenOps should not
+become</h2>
+<p>There are several ways to overcorrect.</p>
+<p>First, do not reduce the entire discipline to a dashboard. A graph
+showing tokens by day is useful, but it does not stop a run, identify
+the owner, or explain whether the output was successful.</p>
+<p>Second, do not optimize for minimum tokens at the expense of
+correctness. A short incorrect answer is not a successful
+optimization.</p>
+<p>Third, do not make the model the only authority on its own usage. The
+provider response, application ledger, and enforced policy should
+determine the facts.</p>
+<p>Fourth, do not assume that one global token limit is fair. Different
+workflows have different value, latency, and complexity. Policies should
+be explicit, reviewed, and tied to business outcomes.</p>
+<p>Finally, do not present TokenOps as a mature industry standard.
+Today, it is a useful name for a set of practices that overlap with LLM
+observability, FinOps, reliability engineering, and agent governance.
+OpenTelemetry provides standard telemetry vocabulary; it does not define
+a complete TokenOps operating model. Microsoft provides examples of
+run-scoped controls; they are not a universal specification. This
+distinction is important because credible engineering writing should
+separate an emerging category from established standards.</p>
+<h2 id="a-practical-adoption-path">A practical adoption path</h2>
+<p>I would introduce these controls in stages.</p>
+<h3 id="stage-1-make-one-workflow-measurable">Stage 1: Make one workflow
+measurable</h3>
+<p>Choose a single agent workflow and add a stable run ID. Record model
+calls, token usage, tool calls, retries, latency, and the final business
+result. Do not begin by collecting every prompt and attachment. A
+dashboard should make these dimensions queryable by run, model, session,
+tool, latency, error, and owner. Microsoft's AI coding-agent monitoring
+guidance illustrates the value of exposing sessions, token usage,
+models, tool invocations, latency, and errors in one operational view.
+<a href="#source-8">[8]</a></p>
+<h3 id="stage-2-establish-ownership-and-baselines">Stage 2: Establish
+ownership and baselines</h3>
+<p>Attribute usage to an application, workflow, team, and environment.
+Measure successful outcomes, not just total tokens. Establish a baseline
+for cost, latency, retries, and failure rate.</p>
+<h3 id="stage-3-add-warnings-and-budgets">Stage 3: Add warnings and
+budgets</h3>
+<p>Set soft thresholds that expose unusual runs without interrupting
+users. Then add hard limits for the workflows where an unbounded run
+could create material cost, latency, or operational risk.</p>
+<h3 id="stage-4-make-exhaustion-recoverable">Stage 4: Make exhaustion
+recoverable</h3>
+<p>Persist the run state and the reason for stopping. Offer a safe next
+action: clarify the request, retry a specific dependency, continue
+asynchronously, or escalate to a person. A budget control that leaves no
+useful recovery path will be bypassed.</p>
+<h3 id="stage-5-optimize-the-expensive-failure-modes">Stage 5: Optimize
+the expensive failure modes</h3>
+<p>Use the traces to fix repeated tool calls, oversized responses, poor
+retrieval, and unnecessary delegation. Re-evaluate success and cost
+after each change. Do not celebrate a lower token count until the
+accepted outcome remains stable.</p>
+<p>The first dashboard is not the finish line. It is the evidence needed
+to decide where the system is wasting effort and where a stricter
+control is justified.</p>
+<h2 id="final-thoughts">Final thoughts</h2>
+<p>AI agents introduce a new kind of operational unit: a workflow that
+can decide how many model calls, tool calls, retries, and delegated
+tasks it needs before it reaches an answer.</p>
+<p>That flexibility is useful, but it makes request-level thinking
+insufficient. The organization needs to observe the complete run,
+attribute it to an owner and outcome, improve the waste, and enforce a
+limit before the next call is made.</p>
+<p>Whether the industry ultimately keeps the name TokenOps is less
+important than adopting the discipline behind it.</p>
+<p>An agent should not be judged only by whether it produced a
+convincing answer. In production, we also need to know what it cost,
+what it changed, what it tried, and whether the result justified the
+work.</p>
+<h2 id="sources">Sources</h2>
+<p>Sources checked October 8, 2026. TokenOps is treated here as an
+emerging term and operating model, not an established universal
+standard. Product documentation describes capabilities; the
+architecture, policy examples, and adoption recommendations above are
+proposed engineering practices.</p>
+<ol type="1">
+<li id="source-1">Microsoft Command Line, August 13, 2026: <a
+href="https://commandline.microsoft.com/tokenops-real-time-run-scoped-cost-control-ai-agents/">Who
+spent all the tokens? Real-time, run-scoped cost control for AI
+agents</a>.</li>
+<li id="source-2">OpenTelemetry, May 14, 2026: <a
+href="https://opentelemetry.io/blog/2026/genai-observability/">Inside
+the LLM Call: GenAI Observability with OpenTelemetry</a>, and <a
+href="https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/">GenAI
+semantic conventions</a>.</li>
+<li id="source-3">Microsoft Learn: <a
+href="https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-optimizer-costs">Agent
+optimizer cost and token usage overview</a>.</li>
+<li id="source-4">Microsoft Agent Framework, May 14, 2026: <a
+href="https://devblogs.microsoft.com/agent-framework/governance-at-the-speed-of-agents-microsoft-agent-framework-and-agent-governance-toolkit-better-together/">Governance
+at the Speed of Agents: Microsoft Agent Framework and Agent Governance
+Toolkit, Better Together</a>.</li>
+<li id="source-5">OWASP Gen AI Security Project: <a
+href="https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/">LLM10:2025
+Unbounded Consumption</a>.</li>
+<li id="source-6">OpenTelemetry Semantic Conventions for GenAI: <a
+href="https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-agent-spans.md">Agent
+spans</a>.</li>
+<li id="source-7">Microsoft Azure Blog, September 10, 2026: <a
+href="https://azure.microsoft.com/en-us/blog/the-economics-of-agent-optimization-how-ai-agent-governance-controls-cost-and-proves-roi/">The
+Economics of Agent Optimization: How AI agent governance controls cost
+and proves ROI</a>.</li>
+<li id="source-8">Microsoft Learn: <a
+href="https://learn.microsoft.com/en-us/azure/managed-grafana/grafana-opentelemetry-app-insights">Monitor
+AI coding agents with Grafana</a>.</li>
+</ol>
+
+      </div>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p class="comments-intro">Where does your agent spend unnecessary tokens: context, retries, tool results, or delegation?</p>
+        <script src="https://giscus.app/client.js"
+                data-repo="Darawsheh/darawsheh.github.io"
+                data-repo-id="R_kgDOTv89MQ"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOTv89Mc4DC0Gm"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
+      </section>
+
+      <footer class="article-footer">
+        <div>
+          <p class="eyebrow">About the author</p>
+          <h2>Islam Darawsheh</h2>
+          <p>Software Architect and Technical Lead focused on enterprise .NET, secure systems, SaaS platforms, integration-heavy solutions, and maintainable software delivery.</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/articles/">More articles</a>
+          <a class="button" href="https://www.linkedin.com/in/darawsheh/">LinkedIn</a>
+        </div>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div>
+  </footer>
+  <script src="../../assets/script.js" defer></script>
+  <!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"c49bf167d60b425c9686b4c56244eae8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
