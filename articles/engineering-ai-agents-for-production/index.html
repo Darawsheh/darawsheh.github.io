@@ -23,6 +23,7 @@
   <meta property="og:image" content="https://darawsheh.github.io/assets/og/engineering-ai-agents-for-production.svg">
   <meta property="og:image:alt" content="Beyond the Prompt: Engineering AI Agents for Production">
   <meta property="article:published_time" content="2026-09-24">
+  <meta property="article:modified_time" content="2026-10-09">
   <meta property="article:author" content="Islam Darawsheh">
   <meta property="article:tag" content="AI Agents">
   <meta property="article:tag" content="Software Architecture">
@@ -41,7 +42,7 @@
     "headline": "Beyond the Prompt: Engineering AI Agents for Production",
     "description": "Build reliable AI agents with scoped tools, durable workflows, approval controls, safe retries, and outcome-based evaluations. A practical .NET architecture.",
     "datePublished": "2026-09-24",
-    "dateModified": "2026-09-24",
+    "dateModified": "2026-10-09",
     "author": {
       "@id": "https://darawsheh.github.io/islam-darawsheh/#person",
       "@type": "Person",
@@ -205,7 +206,7 @@
 <h2 id="give-the-run-a-budget-and-an-explanation-trail">Give the run a budget and an explanation trail</h2>
 <p>A request assistant does not need unlimited attempts to find a department code.</p>
 <p>I would set explicit limits on tool calls, elapsed time, retries, and model expenditure. Active execution time and the business deadline for a pending approval would have separate limits, so waiting overnight would not exhaust a model execution budget. Repeated attempts against the same missing dependency would trigger a controlled stop with a saved status and a useful next action. Permission failures would require a permission decision, rather than another attempt with slightly different wording.</p>
-<p>For diagnosis, every run would have a correlation ID linking its model calls, tool invocations, policy decisions, approvals, and database transitions. Microsoft’s C# harness walkthrough includes OpenTelemetry instrumentation and token-usage observation as part of preparing an agent for production. <a href="#source-1">[1]</a></p>
+<p>For diagnosis, every run would have a correlation ID linking its model calls, tool invocations, policy decisions, approvals, and database transitions. Microsoft’s C# harness walkthrough includes OpenTelemetry instrumentation and token-usage observation as part of preparing an agent for production. <a href="#source-1">[1]</a> For a deeper look at run-level token attribution and budget enforcement, see my <a href="/articles/tokenops-ai-agents-production/">TokenOps guide for production AI agents</a>.</p>
 <p>Our telemetry should also record the model deployment, prompt version, tool schema version, and policy version. Those details help distinguish a model regression from a changed rule or failing integration.</p>
 <p>I would keep credentials out of traces and avoid logging full attachments by default. Operational evidence needs its own access controls and retention rules.</p>
 <p>The support team should be able to explain which action was attempted, under whose authority, and what the receiving system confirmed.</p>
