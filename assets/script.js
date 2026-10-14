@@ -29,6 +29,12 @@
 
   const articles = [
     {
+      slug: 'ef-core-11-same-linq-better-sql',
+      title: 'Same LINQ, Better SQL: Inside EF Core 11',
+      description: 'EF Core 11 generates cleaner SQL from existing LINQ: fewer repeated joins, smaller ORDER BY clauses, and redundant CAST removal, with benchmarks and verification.',
+      published: '2026-10-14'
+    },
+    {
       slug: 'tokenops-ai-agents-production',
       title: 'TokenOps: The Missing Discipline for AI Agents in Production',
       description: 'Control AI agent token usage with run-level attribution, budgets, and enforcement. A practical TokenOps guide with observability and C# accounting.',
@@ -293,3 +299,4 @@
     footerActions.prepend(profileLink);
   }
 })();
+

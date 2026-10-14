@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>Same LINQ, Better SQL: Inside EF Core 11</title>
+      <link>https://darawsheh.github.io/articles/ef-core-11-same-linq-better-sql/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/ef-core-11-same-linq-better-sql/</guid>
+      <pubDate>Wed, 14 Oct 2026 05:33:12 GMT</pubDate>
+      <description>EF Core 11 generates cleaner SQL from existing LINQ: fewer repeated joins, smaller ORDER BY clauses, and redundant CAST removal, with benchmarks and verification.</description>
+    </item>
+    <item>
       <title>TokenOps: The Missing Discipline for AI Agents in Production</title>
       <link>https://darawsheh.github.io/articles/tokenops-ai-agents-production/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/tokenops-ai-agents-production/</guid>
@@ -77,3 +84,4 @@
     </item>
   </channel>
 </rss>
+
