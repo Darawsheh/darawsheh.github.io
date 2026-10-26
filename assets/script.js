@@ -29,6 +29,12 @@
 
   const articles = [
     {
+      slug: 'you-patched-the-server-did-you-patch-your-dotnet-app',
+      title: 'You Patched the Server. Did You Patch Your .NET App?',
+      description: 'Learn how .NET runtime patches reach framework-dependent apps, self-contained deployments, IIS, and Docker—and verify the running application.',
+      published: '2026-10-26'
+    },
+    {
       slug: 'ef-core-11-same-linq-better-sql',
       title: 'Same LINQ, Better SQL: Inside EF Core 11',
       description: 'EF Core 11 generates cleaner SQL from existing LINQ: fewer repeated joins, smaller ORDER BY clauses, and redundant CAST removal, with benchmarks and verification.',

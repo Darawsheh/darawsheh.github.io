@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>You Patched the Server. Did You Patch Your .NET App? | Islam Darawsheh</title>
+  <meta name="description" content="Learn how .NET runtime patches reach framework-dependent apps, self-contained deployments, IIS, and Docker—and verify the running application.">
+  <meta name="author" content="Islam Darawsheh">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#111827">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <link rel="canonical" href="https://darawsheh.github.io/articles/you-patched-the-server-did-you-patch-your-dotnet-app/">
+  <link rel="alternate" type="application/rss+xml" title="Islam Darawsheh Articles" href="/feed.xml">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/article.css">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Islam Darawsheh">
+  <meta property="og:title" content="You Patched the Server. Did You Patch Your .NET App?">
+  <meta property="og:description" content="Learn how .NET runtime patches reach framework-dependent apps, self-contained deployments, IIS, and Docker—and verify the running application.">
+  <meta property="og:url" content="https://darawsheh.github.io/articles/you-patched-the-server-did-you-patch-your-dotnet-app/">
+  <meta property="og:image" content="https://darawsheh.github.io/assets/og/you-patched-the-server-did-you-patch-your-dotnet-app.svg">
+  <meta property="og:image:alt" content="You Patched the Server. Did You Patch Your .NET App?">
+  <meta property="article:published_time" content="2026-10-26">
+  <meta property="article:modified_time" content="2026-10-26">
+  <meta property="article:author" content="Islam Darawsheh">
+  <meta property="article:tag" content=".NET">
+  <meta property="article:tag" content="Security">
+  <meta property="article:tag" content="Deployment">
+  <meta property="article:tag" content="Docker">
+  <meta property="article:tag" content="ASP.NET Core">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="You Patched the Server. Did You Patch Your .NET App?">
+  <meta name="twitter:description" content="Learn how .NET runtime patches reach framework-dependent apps, self-contained deployments, IIS, and Docker—and verify the running application.">
+  <meta name="twitter:image" content="https://darawsheh.github.io/assets/og/you-patched-the-server-did-you-patch-your-dotnet-app.svg">
+  <meta name="twitter:image:alt" content="You Patched the Server. Did You Patch Your .NET App?">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "You Patched the Server. Did You Patch Your .NET App?",
+    "description": "Learn how .NET runtime patches reach framework-dependent apps, self-contained deployments, IIS, and Docker—and verify the running application.",
+    "datePublished": "2026-10-26",
+    "dateModified": "2026-10-26",
+    "author": {
+      "@id": "https://darawsheh.github.io/islam-darawsheh/#person",
+      "@type": "Person",
+      "name": "Islam Darawsheh",
+      "url": "https://darawsheh.github.io/islam-darawsheh/",
+      "sameAs": [
+        "https://github.com/Darawsheh",
+        "https://www.linkedin.com/in/darawsheh/"
+      ]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Islam Darawsheh"
+    },
+    "mainEntityOfPage": "https://darawsheh.github.io/articles/you-patched-the-server-did-you-patch-your-dotnet-app/",
+    "keywords": [
+      ".NET",
+      "Security",
+      "Deployment",
+      "Docker",
+      "ASP.NET Core"
+    ],
+    "url": "https://darawsheh.github.io/articles/you-patched-the-server-did-you-patch-your-dotnet-app/",
+    "image": [
+      "https://darawsheh.github.io/assets/og/you-patched-the-server-did-you-patch-your-dotnet-app.svg"
+    ],
+    "isPartOf": {
+      "@type": "Blog",
+      "@id": "https://darawsheh.github.io/articles/",
+      "name": "Islam Darawsheh Articles"
+    },
+    "wordCount": 1909,
+    "inLanguage": "en",
+    "timeRequired": "PT10M"
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to article</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/islam-darawsheh/">Profile</a>
+        <a href="/articles/">Articles</a>
+        <a href="/#contact">Connect</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="article shell">
+      <header class="article-header">
+        <p class="eyebrow">.NET · Security · Deployment</p>
+        <h1>You Patched the Server. Did You Patch Your .NET App?</h1>
+        <p class="article-deck">Updating the server is only part of runtime patching. Verify the artifact, container image, and process that actually run your application.</p>
+        <div class="article-meta">
+          <span>By Islam Darawsheh</span>
+          <time datetime="2026-10-26">October 26, 2026</time>
+          <span>10 min read</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+<p class="lead">Consider a server that has just received a .NET security update. The installation succeeded, the application responds, and a terminal lists the new runtime.</p>
+<p>The service on that server could still be running with the old one.</p>
+<p>It might include its own runtime. It might live inside an image built last month. Or its process might have started before the update and never restarted.</p>
+<p>To verify a .NET runtime patch, you need to connect the update to the deployed application and its running process.</p>
+<h2>Why this matters now</h2>
+<p>On October 25, Microsoft released out-of-band security updates for .NET 8, 9, and 10, alongside .NET 11 RC3. The announcement covers a Brotli decoder vulnerability and a Linux tarball ownership issue, with different applicability conditions. It explicitly calls for different update actions for framework-dependent apps, self-contained apps, and containers. <a href="#source-1">[1]</a></p>
+<p>For that release, the listed updates are:</p>
+<div class="table-wrap" role="region" aria-label="Deployment comparison" tabindex="0"><table>
+<thead>
+<tr>
+<th>Release line</th>
+<th>October 25 update</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>.NET 8</td>
+<td>8.0.33</td>
+</tr>
+<tr>
+<td>.NET 9</td>
+<td>9.0.22</td>
+</tr>
+<tr>
+<td>.NET 10</td>
+<td>10.0.14</td>
+</tr>
+<tr>
+<td>.NET 11 preview</td>
+<td>RC3</td>
+</tr>
+</tbody></table></div>
+<p>These are runtime release versions, not SDK version numbers. Check the current Microsoft advisory before using them as an operational target. For the Brotli issue, exposure depends on processing Brotli-compressed input; ASP.NET Core request decompression and <code>HttpClient</code> automatic response decompression are not enabled by default. <a href="#source-1">[1]</a></p>
+<p>The question here is how to get an applicable fix into the application that is actually running.</p>
+<h2>First, find out who supplies the runtime</h2>
+<p>The two main publishing modes put the runtime in different places. A framework-dependent deployment uses a compatible shared runtime in its execution environment. A self-contained deployment ships the required runtime with the application. <a href="#source-2">[2]</a></p>
+<div class="table-wrap" role="region" aria-label="Deployment comparison" tabindex="0"><table>
+<thead>
+<tr>
+<th>Deployment</th>
+<th>Where the runtime comes from</th>
+<th>Where to apply a runtime fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Framework-dependent app on a server</td>
+<td>A shared installation available to the app host</td>
+<td>Update the appropriate shared runtime, restart the app, and verify selection</td>
+</tr>
+<tr>
+<td>Self-contained app</td>
+<td>The published application artifact</td>
+<td>Publish a replacement containing the fixed runtime and redeploy it</td>
+</tr>
+<tr>
+<td>Framework-dependent app in a container</td>
+<td>Usually the final image&#39;s shared runtime</td>
+<td>Rebuild using the updated runtime image and replace the deployed containers</td>
+</tr>
+<tr>
+<td>Self-contained app in a container</td>
+<td>The application copied into the image</td>
+<td>Republish the app with the fix, rebuild the image, and replace deployed containers</td>
+</tr>
+</tbody></table></div>
+<p>A container can use either publishing mode. For the normal image-based deployments discussed here, installing .NET on the Docker host does not update the runtime in the image.</p>
+<p>For an existing service, inspect the build pipeline, project properties, publish profiles, and deployed artifact. A file called <code>Orders.Api.exe</code> does not prove that the app is self-contained: framework-dependent publishing can also produce an executable app host. <a href="#source-2">[2]</a></p>
+<h2>A newer SDK is not evidence of a patched process</h2>
+<p>This command answers a build-tool question:</p>
+<pre><code class="language-bash">dotnet --version
+</code></pre>
+<p>It reports the selected SDK version. A <code>global.json</code> can affect that selection. To inventory the runtimes visible to the invoked <code>dotnet</code>, use:</p>
+<pre><code class="language-bash">dotnet --list-runtimes
+</code></pre>
+<p>That inventory is specific to the installation and architecture being queried. An x64 invocation does not automatically establish what an x86 service uses. <a href="#source-4">[4]</a></p>
+<p>The distinction matters during incident response. Someone checking a developer SDK, an administrator&#39;s terminal, or a different installation path may be inspecting an environment that the production service never uses.</p>
+<p>Record the service&#39;s launch command, account, architecture, deployment path, and environment. Then verify the process after the rollout.</p>
+<h2>Framework-dependent: update the right runtime, then restart</h2>
+<p>Framework-dependent apps normally select an installed patch within their compatible runtime family when they start. The selection can be affected by runtime configuration, launch options, and environment variables. Installing .NET 10 does not, by itself, migrate a .NET 8 application to .NET 10. <a href="#source-3">[3]</a></p>
+<p>For an ASP.NET Core service, check the applicable ASP.NET Core shared framework as well as the .NET runtime. Updating an unrelated runtime family is insufficient.</p>
+<p>An explicit Windows x64, framework-dependent publish command might be:</p>
+<pre><code class="language-bash">dotnet publish ./src/Orders.Api/Orders.Api.csproj -c Release -f net10.0 -r win-x64 --self-contained false -o ./artifacts/fdd
+</code></pre>
+<p>This shows how to make the mode explicit. For a fix delivered entirely through the shared framework, republishing the application is normally unnecessary; update that framework and restart the application. Adapt the project path and target to your environment. <a href="#source-5">[5]</a></p>
+<p>After updating the hosting environment, restart or recycle the relevant application processes using your normal deployment procedure. A successful installer run does not establish that every already-running worker has loaded new runtime bits.</p>
+<p>For IIS, distinguish the shared runtimes from the ASP.NET Core Module. The Hosting Bundle includes hosting components, and its installation options can omit runtime components. Check what was installed and follow Microsoft&#39;s restart guidance for that hosting setup. A self-contained IIS application still needs its own application runtime updated. <a href="#source-12">[12]</a></p>
+<h2>Self-contained: the patch has to reach the published artifact</h2>
+<p>A self-contained app selects its runtime during publishing. It does not adopt a newer shared runtime just because one appeared on the server. <a href="#source-3">[3]</a></p>
+<p>Rebuild and republish using an updated toolchain and the appropriate fixed runtime packs. Review SDK selection and runtime-version overrides in the project, imported properties, and publish profile.</p>
+<p>For a <code>net10.0</code> project, this Windows x64 example explicitly requests the .NET runtime version from the October 25 update:</p>
+<pre><code class="language-bash">dotnet publish ./src/Orders.Api/Orders.Api.csproj -c Release -f net10.0 -r win-x64 --self-contained true -p:RuntimeFrameworkVersion=10.0.14 -o ./artifacts/scd
+</code></pre>
+<p><code>RuntimeFrameworkVersion</code> specifies an exact .NET runtime version for self-contained publishing. Treat this dated value as an example: advance explicit pins during later updates. It does not independently establish that the bundled ASP.NET Core framework or other dependencies contain their applicable fixes. <a href="#source-6">[6]</a></p>
+<p>Publish into a fresh output directory, test the result, and deploy the complete replacement artifact. Reusing an old publish folder or copying only the main application DLL can leave you with a mixture of old and new files.</p>
+<p>A pipeline can reproduce the old deployment if it reuses stale inputs. Review separate restore and build stages: <code>--no-restore</code> skips restore, and <code>--no-build</code> also implies <code>--no-restore</code>. Those options are appropriate when the earlier stages have already resolved and built the intended updated inputs. <a href="#source-5">[5]</a></p>
+<p>Keep the resolved runtime-pack versions and the resulting artifact hash with the build record, then match that artifact to the deployment.</p>
+<h2>Containers: refresh the image and replace the running instance</h2>
+<p>A typical .NET multi-stage build separates the SDK used to publish from the runtime image used in production. Inspect both references in the existing Dockerfile:</p>
+<div class="table-wrap" role="region" aria-label="Deployment comparison" tabindex="0"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Example image for a .NET 10 ASP.NET Core app</th>
+<th>What it contributes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Build</td>
+<td><code>mcr.microsoft.com/dotnet/sdk:10.0</code></td>
+<td>The SDK and build environment</td>
+</tr>
+<tr>
+<td>Final</td>
+<td><code>mcr.microsoft.com/dotnet/aspnet:10.0</code></td>
+<td>Shared frameworks used by a framework-dependent app</td>
+</tr>
+</tbody></table></div>
+<p>These are example image references. Microsoft&#39;s tag policies distinguish floating release-line tags from patch-specific tags. Verify the selected image&#39;s OS, architecture, and contents. <a href="#source-8">[8]</a></p>
+<p>With suitable floating tags, request fresh base images during the application image build:</p>
+<pre><code class="language-bash">docker build --pull -t orders-api:2026-10-26 .
+</code></pre>
+<p><code>--pull</code> checks for fresh versions of the referenced images. <code>--no-cache</code> controls reuse of build layers; it does not independently fetch a newer base image. If your Dockerfile pins an old digest or patch version, update that reference first. The same pinned digest still identifies the same image. <a href="#source-7">[7]</a></p>
+<p>The new image must then be pushed or distributed and deployed through your usual process. Restarting an existing container does not replace it with the newly built image.</p>
+<p>For a self-contained app copied into a container, inspect the application artifact too. A fresh final-stage image cannot substitute for republishing the bundled runtime.</p>
+<p>My suggested deployment record includes the source revision, build identity, base-image digests, and final deployed image digest. Check the running replicas against it, including workers and scheduled jobs. A rolling deployment is still incomplete while old replicas continue serving requests or processing work.</p>
+<h2>Single-file and Native AOT need separate attention</h2>
+<p>Single-file deployment describes packaging. It supports both framework-dependent and self-contained applications, so the number of files does not tell you how runtime patching works. Inspect the effective publishing settings. <a href="#source-9">[9]</a></p>
+<p>Native AOT produces a self-contained native application with runtime code included at publish time. A shared-runtime installation does not replace that compiled code. Rebuild and redeploy using the updated toolchain and applicable runtime inputs. <a href="#source-10">[10]</a></p>
+<p>Self-contained single-file and Native AOT applications can run without a shared .NET installation. A framework-dependent single-file app still needs a compatible shared runtime.</p>
+<h2>Ask the running application what it is using</h2>
+<p>For an ASP.NET Core app, a small startup log can provide useful process-level evidence. Add <code>using System.Runtime.InteropServices;</code> with the imports at the top of <code>Program.cs</code>. Place the following after creating <code>app</code> and before calling <code>app.Run()</code>:</p>
+<pre><code class="language-csharp">app.Logger.LogInformation(
+    &quot;Process {ProcessId} started on {RuntimeDescription}; architecture {Architecture}&quot;,
+    Environment.ProcessId,
+    RuntimeInformation.FrameworkDescription,
+    RuntimeInformation.ProcessArchitecture);
+</code></pre>
+<p><code>FrameworkDescription</code> identifies the executing .NET implementation and usually includes its version. Correlate this display value with the deployed build, host or container, and replica identity. The log is useful evidence, not a complete vulnerability assessment. <a href="#source-11">[11]</a></p>
+<p>This is evidence about the core runtime. It does not establish the patch state of the ASP.NET Core shared framework, the IIS module, NuGet dependencies, or operating-system libraries. Verify the component named in the advisory against its corresponding deployment evidence.</p>
+<p>Likewise, a <code>runtimeconfig.json</code> describes runtime requirements and settings. For a framework-dependent app, its requested version is not necessarily the patch version selected when the process started. <a href="#source-3">[3]</a></p>
+<p>For images that include the CLI, an inside-container inventory can help:</p>
+<pre><code class="language-bash">docker exec orders-api dotnet --list-runtimes
+</code></pre>
+<p>Treat it as an inventory of that container&#39;s shared installation, not proof that a self-contained app uses it. Minimal and Native AOT images may have no <code>dotnet</code> command at all.</p>
+<h2>Close the patch task with application evidence</h2>
+<p>I would close a runtime patch task only after establishing four things:</p>
+<ol>
+<li><strong>Applicability:</strong> identify the affected component, platform, and fixed release from the current advisory.</li>
+<li><strong>Delivery:</strong> show that the relevant shared installation, application artifact, or container image contains the fix.</li>
+<li><strong>Activation:</strong> confirm that the intended processes and replicas are running the updated deployment.</li>
+<li><strong>Behavior:</strong> exercise the application&#39;s critical paths. Know whether a rollback would reintroduce the vulnerable component, and plan that contingency explicitly.</li>
+</ol>
+<p>A server can be updated while an application remains behind. The useful completion record names the application, the deployed artifact, and the process using it.</p>
+<p><em>Scope and verification: references checked October 26, 2026. The commands and C# snippet are illustrative and were reviewed against the documentation; they were not executed against a sample application for this article. The deployment workflow and completion criteria are proposed engineering practices.</em></p>
+<h2>Sources</h2>
+<p><a id="source-1"></a></p>
+<p><strong>1.</strong> Microsoft .NET Blog, October 25, 2026: <a href="https://devblogs.microsoft.com/dotnet/dotnet-october-2026-oob-security-updates/">.NET October 2026 Out-of-Band Security Updates</a>.</p>
+<p><a id="source-2"></a></p>
+<p><strong>2.</strong> Microsoft Learn: <a href="https://learn.microsoft.com/en-us/dotnet/core/deploying/">.NET application publishing overview</a>.</p>
+<p><a id="source-3"></a></p>
+<p><strong>3.</strong> Microsoft Learn: <a href="https://learn.microsoft.com/en-us/dotnet/core/versions/selection">Select which .NET version to use</a>.</p>
+<p><a id="source-4"></a></p>
+<p><strong>4.</strong> Microsoft Learn: <a href="https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet"><code>dotnet</code> command and environment-information options</a>.</p>
+<p><a id="source-5"></a></p>
+<p><strong>5.</strong> Microsoft Learn: <a href="https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-publish"><code>dotnet publish</code></a>.</p>
+<p><a id="source-6"></a></p>
+<p><strong>6.</strong> Microsoft Learn: <a href="https://learn.microsoft.com/en-us/dotnet/core/project-sdk/msbuild-props#runtimeframeworkversion"><code>RuntimeFrameworkVersion</code> MSBuild property</a>.</p>
+<p><a id="source-7"></a></p>
+<p><strong>7.</strong> Docker Docs: <a href="https://docs.docker.com/build/building/best-practices/">Building best practices—rebuilds, fresh base images, caching, and digest pinning</a>.</p>
+<p><a id="source-8"></a></p>
+<p><strong>8.</strong> Microsoft <code>dotnet/dotnet-docker</code>: <a href="https://github.com/dotnet/dotnet-docker/blob/main/documentation/supported-tags.md">.NET container tag patterns and policies</a>.</p>
+<p><a id="source-9"></a></p>
+<p><strong>9.</strong> Microsoft Learn: <a href="https://learn.microsoft.com/en-us/dotnet/core/deploying/single-file/overview">Single-file deployment</a>.</p>
+<p><a id="source-10"></a></p>
+<p><strong>10.</strong> Microsoft Learn: <a href="https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/">Native AOT deployment</a>.</p>
+<p><a id="source-11"></a></p>
+<p><strong>11.</strong> Microsoft Learn: <a href="https://learn.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.runtimeinformation.frameworkdescription?view=net-10.0"><code>RuntimeInformation.FrameworkDescription</code></a>.</p>
+<p><a id="source-12"></a></p>
+<p><strong>12.</strong> Microsoft Learn: <a href="https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/hosting-bundle?view=aspnetcore-10.0">The .NET Hosting Bundle</a>.</p>
+
+      </div>
+
+      <section class="related-articles" aria-labelledby="related-articles-title">
+        <p class="eyebrow">Continue reading</p>
+        <h2 id="related-articles-title">Related articles</h2>
+        <ul>
+          <li><a href="/articles/ef-core-pagination-page-numbers-vs-cursors/">Your EF Core Pagination Is Slower Than You Think—Skip/Take Is Only Part of the Story</a><span>Choose pagination around the UI, stable ordering, indexes, and database work.</span></li>
+          <li><a href="/articles/ef-core-entities-not-api-contracts/">Stop Exposing EF Core Entities from Your .NET 10 APIs</a><span>Use explicit API contracts and focused EF Core projections.</span></li>
+          <li><a href="/articles/dotnet-11-9-new-features-that-actually-matter/">.NET 11: 9 New Features That Actually Matter to Developers</a><span>Explore the broader .NET 11 release cycle.</span></li>
+        </ul>
+      </section>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p class="comments-intro">How do you verify that every running instance has picked up a runtime security update?</p>
+        <script src="https://giscus.app/client.js"
+                data-repo="Darawsheh/darawsheh.github.io"
+                data-repo-id="R_kgDOTv89MQ"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOTv89Mc4DC0Gm"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
+      </section>
+
+      <footer class="article-footer">
+        <div>
+          <p class="eyebrow">About the author</p>
+          <h2>Islam Darawsheh</h2>
+          <p>Software Architect and Technical Lead focused on enterprise .NET, secure systems, SaaS platforms, integration-heavy solutions, and maintainable software delivery.</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/articles/">More articles</a>
+          <a class="button" href="https://www.linkedin.com/in/darawsheh/">LinkedIn</a>
+        </div>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div>
+  </footer>
+  <script src="../../assets/script.js" defer></script>
+  <!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"c49bf167d60b425c9686b4c56244eae8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
+

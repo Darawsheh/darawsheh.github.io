@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>You Patched the Server. Did You Patch Your .NET App?</title>
+      <link>https://darawsheh.github.io/articles/you-patched-the-server-did-you-patch-your-dotnet-app/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/you-patched-the-server-did-you-patch-your-dotnet-app/</guid>
+      <pubDate>Mon, 26 Oct 2026 08:00:00 GMT</pubDate>
+      <description>Learn how .NET runtime patches reach framework-dependent apps, self-contained deployments, IIS, and Docker—and verify the running application.</description>
+    </item>
+    <item>
       <title>Same LINQ, Better SQL: Inside EF Core 11</title>
       <link>https://darawsheh.github.io/articles/ef-core-11-same-linq-better-sql/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/ef-core-11-same-linq-better-sql/</guid>
