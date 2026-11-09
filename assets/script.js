@@ -29,6 +29,12 @@
 
   const articles = [
     {
+      slug: 'dotnet-11-runtime-async-different-engine',
+      title: 'The Same async/await, a Different Engine: Inside .NET 11 Runtime Async',
+      description: 'How .NET 11 moves async machinery toward the JIT, why some Task allocations disappear, and how to test the opt-in preview safely.',
+      published: '2026-11-09'
+    },
+    {
       slug: 'you-patched-the-server-did-you-patch-your-dotnet-app',
       title: 'You Patched the Server. Did You Patch Your .NET App?',
       description: 'Learn how .NET runtime patches reach framework-dependent apps, self-contained deployments, IIS, and Docker—and verify the running application.',
