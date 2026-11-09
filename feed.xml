@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>The Same async/await, a Different Engine: Inside .NET 11 Runtime Async</title>
+      <link>https://darawsheh.github.io/articles/dotnet-11-runtime-async-different-engine/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/dotnet-11-runtime-async-different-engine/</guid>
+      <pubDate>Mon, 09 Nov 2026 04:45:00 GMT</pubDate>
+      <description>How .NET 11 moves async machinery toward the JIT, why some Task allocations disappear, and how to test the opt-in preview safely.</description>
+    </item>
+    <item>
       <title>You Patched the Server. Did You Patch Your .NET App?</title>
       <link>https://darawsheh.github.io/articles/you-patched-the-server-did-you-patch-your-dotnet-app/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/you-patched-the-server-did-you-patch-your-dotnet-app/</guid>
