@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Same async/await, a Different Engine: Inside .NET 11 Runtime Async | Islam Darawsheh</title>
+  <meta name="description" content="Inside .NET 11 Runtime Async: compiler lowering, JIT-managed suspension, allocation benchmarks, and a controlled opt-in experiment.">
+  <meta name="author" content="Islam Darawsheh">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#111827">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <link rel="canonical" href="https://darawsheh.github.io/articles/dotnet-11-runtime-async-different-engine/">
+  <link rel="alternate" type="application/rss+xml" title="Islam Darawsheh Articles" href="/feed.xml">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/article.css">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Islam Darawsheh">
+  <meta property="og:title" content="The Same async/await, a Different Engine: Inside .NET 11 Runtime Async">
+  <meta property="og:description" content="Inside .NET 11 Runtime Async: compiler lowering, JIT-managed suspension, allocation benchmarks, and a controlled opt-in experiment.">
+  <meta property="og:url" content="https://darawsheh.github.io/articles/dotnet-11-runtime-async-different-engine/">
+  <meta property="og:image" content="https://darawsheh.github.io/assets/og/dotnet-11-runtime-async-different-engine.svg">
+  <meta property="og:image:alt" content="The Same async/await, a Different Engine: Inside .NET 11 Runtime Async">
+  <meta property="article:published_time" content="2026-11-09">
+  <meta property="article:modified_time" content="2026-11-09">
+  <meta property="article:author" content="Islam Darawsheh">
+  <meta property="article:tag" content=".NET">
+  <meta property="article:tag" content="Runtime Async">
+  <meta property="article:tag" content="JIT">
+  <meta property="article:tag" content="C#">
+  <meta property="article:tag" content="Performance">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Same async/await, a Different Engine: Inside .NET 11 Runtime Async">
+  <meta name="twitter:description" content="Inside .NET 11 Runtime Async: compiler lowering, JIT-managed suspension, allocation benchmarks, and a controlled opt-in experiment.">
+  <meta name="twitter:image" content="https://darawsheh.github.io/assets/og/dotnet-11-runtime-async-different-engine.svg">
+  <meta name="twitter:image:alt" content="The Same async/await, a Different Engine: Inside .NET 11 Runtime Async">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "The Same async/await, a Different Engine: Inside .NET 11 Runtime Async",
+    "description": "Inside .NET 11 Runtime Async: compiler lowering, JIT-managed suspension, allocation benchmarks, and a controlled opt-in experiment.",
+    "datePublished": "2026-11-09",
+    "dateModified": "2026-11-09",
+    "author": {
+      "@id": "https://darawsheh.github.io/islam-darawsheh/#person",
+      "@type": "Person",
+      "name": "Islam Darawsheh",
+      "url": "https://darawsheh.github.io/islam-darawsheh/",
+      "sameAs": [
+        "https://github.com/Darawsheh",
+        "https://www.linkedin.com/in/darawsheh/"
+      ]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Islam Darawsheh"
+    },
+    "mainEntityOfPage": "https://darawsheh.github.io/articles/dotnet-11-runtime-async-different-engine/",
+    "keywords": [
+      ".NET",
+      "Runtime Async",
+      "JIT",
+      "C#",
+      "Performance"
+    ],
+    "url": "https://darawsheh.github.io/articles/dotnet-11-runtime-async-different-engine/",
+    "image": [
+      "https://darawsheh.github.io/assets/og/dotnet-11-runtime-async-different-engine.svg"
+    ],
+    "isPartOf": {
+      "@type": "Blog",
+      "@id": "https://darawsheh.github.io/articles/",
+      "name": "Islam Darawsheh Articles"
+    },
+    "wordCount": 2390,
+    "inLanguage": "en",
+    "timeRequired": "PT12M"
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to article</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/islam-darawsheh/">Profile</a>
+        <a href="/articles/">Articles</a>
+        <a href="/#contact">Connect</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="article shell">
+      <header class="article-header">
+        <p class="eyebrow">.NET · Runtime · Performance</p>
+        <h1>The Same async/await, a Different Engine: Inside .NET 11 Runtime Async</h1>
+        <p class="article-deck">How .NET 11 moves async machinery toward the JIT, why some Task allocations disappear, and how to test the opt-in preview safely.</p>
+        <div class="article-meta">
+          <span>By Islam Darawsheh</span>
+          <time datetime="2026-11-09">November 9, 2026</time>
+          <span>12 min read</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+<p class="lead">For more than a decade, C# developers have written <code>async</code> methods without having to manage callbacks or continuation state manually. The code reads almost like a synchronous method, even though its execution may stop at an <code>await</code> and resume later on another thread.</p>
+<p>What changed in .NET 11 is not that programming model. It is <strong>who does the work of turning an async method into something the runtime can suspend and resume</strong>.</p>
+<p>Traditionally, the C# compiler lowered each <code>async</code> method into a generated state machine. Runtime Async V2 moves much of that transformation into the runtime and JIT. That creates new opportunities to remove intermediate tasks, reduce generated code, and make live call stacks easier to inspect. It does <strong>not</strong> mean every <code>async</code> method becomes allocation-free or every workload becomes faster. <a href="#source-1">[1]</a><a href="#source-2">[2]</a></p>
+<p><strong>Version context:</strong> As of November 9, 2026, .NET 11 is at RC2, with its official launch event scheduled to begin November 10. Runtime Async remains a preview feature for application code and must be explicitly enabled. The .NET 11 runtime libraries are already built with it. <a href="#source-1">[1]</a><a href="#source-6">[6]</a></p>
+<h2 id="the-machinery-behind-a-familiar-await">The machinery behind a familiar <code>await</code></h2>
+<p>Consider a deliberately small method:</p>
+<pre><code class="language-csharp">static async Task&lt;int&gt; ReadAsync(Task&lt;int&gt; pendingRead)
+{
+    int result = await pendingRead;
+    return result;
+}</code></pre>
+<p>With traditional compiler lowering, the source method is not emitted as an ordinary method containing a literal suspension instruction. The compiler creates an entry point and a state-machine type. That generated type has a <code>MoveNext()</code> method, fields for state that must survive an incomplete <code>await</code>, an awaiter, and an async method builder that manages completion and errors. The generated machinery implements <code>IAsyncStateMachine</code>.</p>
+<p>This design has been refined for years. An already-completed operation can follow a fast path; an <code>async</code> call does <strong>not</strong> automatically allocate a fresh heap object for every state machine or every <code>await</code>. Still, the compiler has already committed to a particular representation before the JIT gets to optimize it. <a href="#source-2">[2]</a></p>
+<p>A simplified comparison is:</p>
+<pre><code class="language-text">Traditional async (compiler-lowered)
+C# async method
+    -&gt; generated state machine + MoveNext()
+    -&gt; builder, awaiter, and continuation handling
+    -&gt; runtime executes the generated code
+
+.NET 11 Runtime Async (opt-in)
+C# async method
+    -&gt; suspension-aware IL + async method metadata
+    -&gt; runtime/JIT handle suspension and resumption
+    -&gt; public Task/ValueTask contract remains intact</code></pre>
+<p>The difference matters most when one small async method awaits another, which awaits another—an ordinary pattern in application services, middleware, and libraries.</p>
+<h2 id="what-the-compiler-now-emits">What the compiler now emits</h2>
+<p>With Runtime Async enabled, an eligible method is marked with the <code>MethodImplOptions.Async</code> metadata flag. Rather than emitting an <code>IAsyncStateMachine</code> implementation for that method, the compiler can emit compact IL that uses runtime-recognized helpers such as <code>AsyncHelpers.Await&lt;T&gt;()</code>. <a href="#source-2">[2]</a><a href="#source-3">[3]</a></p>
+<p>For this source method:</p>
+<pre><code class="language-csharp">static async Task&lt;int&gt; CallerAsync() =&gt; await CalleeAsync();</code></pre>
+<p>The runtime-async IL has roughly this <strong>illustrative shape</strong> (not a verbatim disassembly):</p>
+<pre><code class="language-il">.method ... Task&lt;int&gt; CallerAsync() cil managed async
+{
+    call Task&lt;int&gt; CalleeAsync()
+    call int32 AsyncHelpers::Await&lt;int32&gt;(Task&lt;int&gt;)
+    ret
+}</code></pre>
+<p>The intriguing part is the apparent mismatch: the method advertises <code>Task&lt;int&gt;</code>, while its final <code>ret</code> consumes an <code>int</code>. That is valid under the proposed runtime-async calling convention, where the runtime manages the externally visible task boundary. The actual metadata, calling conventions, and helper signatures are described in the draft specification. <a href="#source-2">[2]</a><a href="#source-3">[3]</a></p>
+<p>There is a subtle detail here: the method's public signature may still be <code>Task&lt;int&gt;</code>, but the runtime can use a second, internal calling convention for a direct async call. Stephen Toub describes these as related method identities: the normal entry point preserves the task-returning API, while an <strong>AsyncCall</strong> variant can deliver a result directly or arrange a continuation. <a href="#source-2">[2]</a></p>
+<p>That is how the runtime can optimize this chain:</p>
+<pre><code class="language-csharp">static async Task&lt;int&gt; AAsync() =&gt; await BAsync();
+static async Task&lt;int&gt; BAsync() =&gt; await CAsync();
+static async Task&lt;int&gt; CAsync()
+{
+    await Task.CompletedTask;
+    return 42;
+}</code></pre>
+<p>The completed await in <code>CAsync</code> keeps this path synchronous. The important pattern is the direct call followed immediately by an <code>await</code>.</p>
+<p>In the traditional model, each method has its own lowered machinery and task-like completion boundary. Under Runtime Async, the JIT can recognize a direct call-and-await pattern and, where safe, connect the calls without materializing a separate intermediate <code>Task&lt;int&gt;</code> at every layer. When the deepest call finishes synchronously, the value can travel up the fused chain. When it suspends, the runtime maintains the continuation chain. The outer caller still receives the public <code>Task&lt;int&gt;</code> it expects. <a href="#source-2">[2]</a></p>
+<p><strong>The task contract is not being removed.</strong> If your code needs to keep a task, pass it to <code>Task.WhenAll</code>, attach a continuation, or otherwise observe it as an object, the runtime cannot simply pretend that object does not exist. This optimization targets boundaries that are not observably required.</p>
+<h2 id="how-to-enable-runtime-async-in-net-11">How to enable Runtime Async in .NET 11</h2>
+<p>Runtime Async is opt-in for application code. In a project targeting <code>net11.0</code>, the documented setting is:</p>
+<pre><code class="language-xml">&lt;PropertyGroup&gt;
+  &lt;Features&gt;$(Features);runtime-async=on&lt;/Features&gt;
+&lt;/PropertyGroup&gt;</code></pre>
+<p>For experiments, use a conditional MSBuild property so the same source can be compiled with the feature on or off:</p>
+<pre><code class="language-xml">&lt;Project Sdk=&quot;Microsoft.NET.Sdk&quot;&gt;
+  &lt;PropertyGroup&gt;
+    &lt;OutputType&gt;Exe&lt;/OutputType&gt;
+    &lt;TargetFramework&gt;net11.0&lt;/TargetFramework&gt;
+    &lt;ImplicitUsings&gt;enable&lt;/ImplicitUsings&gt;
+    &lt;Nullable&gt;enable&lt;/Nullable&gt;
+    &lt;Features Condition=&quot;'$(RuntimeAsync)' == 'true'&quot;&gt;$(Features);runtime-async=on&lt;/Features&gt;
+  &lt;/PropertyGroup&gt;
+&lt;/Project&gt;</code></pre>
+<p>Compile and run the <strong>same code</strong> in two configurations:</p>
+<pre><code class="language-bash">dotnet run -c Release --property:RuntimeAsync=false
+dotnet run -c Release --property:RuntimeAsync=true</code></pre>
+<p>The custom <code>RuntimeAsync</code> property above only controls whether our project appends the documented compiler switch. It is not a built-in runtime environment variable. You do not need <code>LangVersion=preview</code> or <code>EnablePreviewFeatures=true</code> for this feature in <code>net11.0</code>. Earlier posts that recommend the old <code>DOTNET_RuntimeAsync</code> environment-variable switches are out of date. <a href="#source-1">[1]</a><a href="#source-2">[2]</a></p>
+<h3 id="experiment-1-inspect-a-live-call-stack">Experiment 1: inspect a live call stack</h3>
+<p>Put this in <code>Program.cs</code>:</p>
+<pre><code class="language-csharp">using System.Diagnostics;
+
+await EndpointAsync();
+
+static async Task EndpointAsync()
+{
+    await Task.CompletedTask;
+    await ServiceAsync();
+}
+
+static async Task ServiceAsync()
+{
+    await Task.CompletedTask;
+    await RepositoryAsync();
+}
+
+static async Task RepositoryAsync()
+{
+    await Task.CompletedTask;
+    Console.WriteLine(new StackTrace(fNeedFileInfo: true));
+}</code></pre>
+<p>With traditional lowering, a live stack can expose infrastructure such as <code>AsyncMethodBuilderCore.Start</code> and repeated generated method frames. With Runtime Async, the live stack is generally closer to the source-level <code>EndpointAsync -&gt; ServiceAsync -&gt; RepositoryAsync</code> path. The exact frame count and names depend on build and inlining. Microsoft documents a comparable example with <strong>13 frames without</strong> Runtime Async and <strong>5 frames with</strong> it. Those are Microsoft's published results, not measurements taken for this article. <a href="#source-1">[1]</a></p>
+<p>There is an important distinction: <strong>this example deliberately uses completed awaits</strong>, so the methods remain on the physical call stack during the sample. Once an operation actually suspends, the thread stack unwinds. A later physical stack trace is not automatically a complete logical history of the asynchronous operation. That requires async-aware diagnostic tooling. Also, exception stack traces already have cleanup that makes them much more readable than raw live stacks, so do not expect the same dramatic difference in <code>catch (Exception ex)</code> output. <a href="#source-1">[1]</a><a href="#source-2">[2]</a></p>
+<h3 id="experiment-2-benchmark-the-synchronous-and-suspended-paths">Experiment 2: benchmark the synchronous and suspended paths</h3>
+<p>To test allocations and time, create a separate .NET 11 console benchmark project using the conditional <code>.csproj</code> setting above, then install BenchmarkDotNet:</p>
+<pre><code class="language-bash">dotnet add package BenchmarkDotNet</code></pre>
+<p>Replace its <code>Program.cs</code> with:</p>
+<pre><code class="language-csharp">using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Running;
+
+BenchmarkRunner.Run&lt;AsyncChainBenchmarks&gt;();
+
+[MemoryDiagnoser]
+[InProcess]
+public class AsyncChainBenchmarks
+{
+    private static readonly Task&lt;int&gt; Completed = Task.FromResult(42);
+
+    [Benchmark]
+    public Task&lt;int&gt; CompletedPath() =&gt; OuterAsync(shouldYield: false);
+
+    [Benchmark]
+    public Task&lt;int&gt; SuspendedPath() =&gt; OuterAsync(shouldYield: true);
+
+    private static async Task&lt;int&gt; OuterAsync(bool shouldYield)
+        =&gt; await MiddleAsync(shouldYield);
+
+    private static async Task&lt;int&gt; MiddleAsync(bool shouldYield)
+        =&gt; await InnerAsync(shouldYield);
+
+    private static async Task&lt;int&gt; InnerAsync(bool shouldYield)
+    {
+        if (shouldYield)
+            await Task.Yield();
+
+        return await Completed;
+    }
+}</code></pre>
+<p>Build and run each configuration explicitly:</p>
+<pre><code class="language-bash"># Traditional compiler lowering
+dotnet build -c Release -p:RuntimeAsync=false --no-incremental
+dotnet run -c Release --no-build
+
+# Runtime Async lowering
+dotnet build -c Release -p:RuntimeAsync=true --no-incremental
+dotnet run -c Release --no-build</code></pre>
+<p><code>[InProcess]</code> runs the benchmarks using the already-compiled benchmark assembly. This avoids BenchmarkDotNet's default out-of-process toolchain potentially generating a new build without the custom feature switch. In-process execution has different isolation and timing tradeoffs; do not directly compare its absolute results with Microsoft's published out-of-process microbenchmarks. Retain the reports from both runs. <a href="#source-7">[7]</a></p>
+<p><code>CompletedPath</code> explores a chain whose awaited task is already completed. <code>SuspendedPath</code> introduces a real asynchronous yield. BenchmarkDotNet handles repeated execution and reports allocations, but the results will depend on the SDK, runtime build, hardware, JIT warm-up, and test conditions. The snippets describe <strong>experiments for readers to reproduce</strong>; they have not been compiled or run as part of preparing this article.</p>
+<p>Keep the full runtime version constant between the two builds. Comparing .NET 10 against .NET 11 would also include many unrelated runtime improvements and would not isolate the effect of the lowering strategy.</p>
+<h2 id="what-published-measurements-actually-show">What published measurements actually show</h2>
+<p>Stephen Toub published a controlled .NET 11 microbenchmark that compares two-layer async chains using classic compiler lowering versus Runtime Async in the same runtime. His benchmark used an experimental, compiler-recognized per-method opt-out to keep the comparison focused. Selected results: <a href="#source-2">[2]</a></p>
+<div class="table-wrap"><table><thead><tr><th>Scenario</th><th>Traditional lowering</th><th>Runtime Async</th><th>Allocated, traditional</th><th>Allocated, Runtime Async</th></tr></thead><tbody><tr><td>Two-layer completed chain</td><td>21.221 ns</td><td>6.151 ns</td><td>144 B</td><td>0 B</td></tr>
+<tr><td>Two-layer yielding chain</td><td>254.139 ns</td><td>116.927 ns</td><td>248 B</td><td>168 B</td></tr></tbody></table></div>
+<p>These are <strong>author-reported microbenchmark results for that exact setup</strong>, not results from the preceding three-layer example and not general application-level speedup estimates. The zero-byte entry is an allocation measurement for one narrowly defined benchmark operation, not a promise that a real HTTP request or database operation will allocate nothing.</p>
+<p>There is also a counterexample to blanket performance claims: in Toub's exception-handling benchmark, one shallow yielding case measured <strong>6.308 μs with classic lowering versus 8.211 μs with Runtime Async</strong>. Deeper chains performed substantially better with Runtime Async. That variation is exactly why a preview runtime feature needs workload-specific measurement. <a href="#source-2">[2]</a></p>
+<p>The same investigation reports a small compiled-assembly probe—ten async methods—shrinking from <strong>10,752 bytes to 5,632 bytes</strong> with Runtime Async. Again, that is one demonstration, not a universal 48% reduction in application size. <a href="#source-2">[2]</a></p>
+<h2 id="not-just-fewer-tasks-optimizations-across-the-execution-path">Not just fewer tasks: optimizations across the execution path</h2>
+<p>Runtime Async gives the JIT control over suspension points and allows optimizations that were harder once the compiler had already expanded each method into a state machine. The .NET 11 work includes tail merging of suspension points, tiered compilation for async variants, continuation reuse, and recognition of common <code>Task</code> and <code>ValueTask</code> factories. ReadyToRun and NativeAOT support also landed during the preview cycle. <a href="#source-1">[1]</a><a href="#source-4">[4]</a></p>
+<p>There is a related but distinct .NET 11 improvement involving <code>ExecutionContext</code>. A continuation can skip capture-and-restore work when there is no ambient state to restore. <code>AsyncLocal&lt;T&gt;</code> values still need to flow correctly when present. This optimization also benefits traditional <code>Task</code>/<code>ValueTask</code> paths; it should <strong>not</strong> be counted as a Runtime-Async-only gain. <a href="#source-1">[1]</a></p>
+<p>Nor should it be confused with <code>ConfigureAwait(false)</code>. <code>ConfigureAwait(false)</code> affects how a captured synchronization context or scheduler is used for continuation scheduling; it does not switch off <code>ExecutionContext</code> flow or erase <code>AsyncLocal&lt;T&gt;</code> values. <a href="#source-5">[5]</a></p>
+<h2 id="compatibility-limits-and-an-important-apidesign-reminder">Compatibility, limits, and an important API-design reminder</h2>
+<p>The intention is behavioral compatibility: existing <code>await</code>, exceptions, cancellation, and <code>ConfigureAwait</code> semantics should continue to work, whether the method was lowered by the compiler or by the runtime. Older libraries and newly compiled runtime-async code can interoperate via adapters at their boundaries. A semantic difference would be a bug, not a new behavior applications are supposed to depend on. <a href="#source-2">[2]</a><a href="#source-3">[3]</a></p>
+<p>The current feature targets methods returning <code>Task</code>, <code>Task&lt;T&gt;</code>, <code>ValueTask</code>, or <code>ValueTask&lt;T&gt;</code>. <code>async void</code>, async iterators, and custom task-like builder types still use traditional compiler lowering. Therefore, enabling the feature does not remove <strong>every</strong> generated async state machine from an arbitrary application. <a href="#source-2">[2]</a></p>
+<p>It also does not make <code>ValueTask&lt;T&gt;</code> obsolete. The choice between <code>Task&lt;T&gt;</code> and <code>ValueTask&lt;T&gt;</code> remains a question of API contracts, expected synchronous completion rates, caller behavior, and measurement—not simply which type looks lighter in a benchmark.</p>
+<p>The feature remains opt-in and preview for application code in .NET 11. Stephen Toub has expressed hope that Runtime Async could become enabled by default in .NET 12; that is an expectation, <strong>not a shipping commitment</strong>. <a href="#source-1">[1]</a><a href="#source-2">[2]</a></p>
+<h2 id="how-i-would-evaluate-it-in-a-real-aspnet-core-service">How I would evaluate it in a real ASP.NET Core service</h2>
+<p>Begin with one representative, async-heavy service rather than enabling a preview switch across every repository. Compare two builds of the <strong>same</strong> .NET 11 version, one with Runtime Async disabled and one enabled. Keep request mix, dependency versions, caching, connection pools, deployment settings, and load-generator behavior constant.</p>
+<p>Record p50/p95/p99 request latency, throughput, allocated bytes and Gen 0/1/2 collections, CPU use, assembly size, and behavior under concurrency. Include a cold-start test if startup matters. Test successful calls, cancellation, exception paths, and workflows that rely on <code>AsyncLocal&lt;T&gt;</code> or <code>ConfigureAwait</code> behavior. Confirm that exception handling and returned results remain identical.</p>
+<p>A microbenchmark helps identify a mechanism. A load test shows whether that mechanism matters when networking, databases, serialization, and other work dominate an endpoint. A small canary is useful only after compatibility and operational tests pass—and an opt-in preview should still be treated as a deliberate production risk decision.</p>
+<h2 id="the-real-takeaway">The real takeaway</h2>
+<p>The valuable change in .NET 11 is that <strong>the compiler no longer has to decide the entire execution strategy for every eligible async method before the runtime sees it</strong>. The JIT can recognize direct async chains and avoid some of the intermediate machinery that was previously baked into the compiled representation.</p>
+<p>For developers, the advice is refreshingly unchanged: write readable async code, pass cancellation where appropriate, keep <code>Task</code> as the ordinary default, and do not flatten clean abstractions solely to avoid hypothetical async overhead. If you want to explore the new engine, enable it in a controlled .NET 11 experiment and measure the workload that matters to you.</p>
+<p>The <code>async/await</code> you write is the same. The implementation beneath it is becoming more capable.</p>
+<h2 id="sources">Sources</h2>
+<p id="source-1"><strong><a href="#source-1">[1]</a></strong> Microsoft Learn, <a href="https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-11/runtime">What's new in the .NET 11 runtime — Runtime Async</a> (RC2 documentation).</p>
+<p id="source-2"><strong><a href="#source-2">[2]</a></strong> Stephen Toub, <a href="https://devblogs.microsoft.com/dotnet/performance-improvements-in-net-11/">Performance Improvements in .NET 11</a> (September 15, 2026; section “Runtime Async”). Published measurements in this article are attributed to this source.</p>
+<p id="source-3"><strong><a href="#source-3">[3]</a></strong> dotnet/runtime, <a href="https://github.com/dotnet/runtime/blob/main/docs/design/specs/runtime-async.md">Runtime Async draft specification</a> (draft, not a finalized ECMA-335 standard).</p>
+<p id="source-4"><strong><a href="#source-4">[4]</a></strong> dotnet/core, <a href="https://github.com/dotnet/core/blob/main/release-notes/11.0/preview/preview7/runtime.md">.NET 11 Preview 7 runtime release notes</a> (tiered compilation and tail-await work); see also the <a href="https://github.com/dotnet/core/blob/main/release-notes/11.0/preview/preview6/runtime.md">Preview 6 runtime notes</a>.</p>
+<p id="source-5"><strong><a href="#source-5">[5]</a></strong> Stephen Toub, <a href="https://devblogs.microsoft.com/dotnet/configureawait-faq/">ConfigureAwait FAQ</a> (the distinction between <code>SynchronizationContext</code> and <code>ExecutionContext</code>).</p>
+<p id="source-6"><strong><a href="#source-6">[6]</a></strong> Microsoft, <a href="https://dotnet.microsoft.com/en-us/conf">.NET Conf 2026</a> (November 10–13 launch event).</p>
+<p id="source-7"><strong><a href="#source-7">[7]</a></strong> BenchmarkDotNet, <a href="https://benchmarkdotnet.org/articles/samples/IntroInProcess.html">InProcess sample</a> (in-process toolchain documentation).</p>
+      </div>
+
+      <section class="related-articles" aria-labelledby="related-articles-title">
+        <p class="eyebrow">Continue reading</p><h2 id="related-articles-title">Related articles</h2><ul>
+<li><a href="/articles/dotnet-11-9-new-features-that-actually-matter/">.NET 11: 9 New Features That Actually Matter to Developers</a><span>A broader view of the .NET 11 release cycle.</span></li>
+<li><a href="/articles/ef-core-11-same-linq-better-sql/">Same LINQ, Better SQL: Inside EF Core 11</a><span>Another look at under-the-hood improvements.</span></li>
+<li><a href="/articles/you-patched-the-server-did-you-patch-your-dotnet-app/">You Patched the Server. Did You Patch Your .NET App?</a><span>Understand how runtime servicing reaches your deployment.</span></li>
+</ul></section>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p class="comments-intro">Have you tried Runtime Async on a real service? Share your findings and trade-offs.</p>
+        <script src="https://giscus.app/client.js"
+                data-repo="Darawsheh/darawsheh.github.io"
+                data-repo-id="R_kgDOTv89MQ"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOTv89Mc4DC0Gm"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
+      </section>
+
+      <footer class="article-footer">
+        <div>
+          <p class="eyebrow">About the author</p>
+          <h2>Islam Darawsheh</h2>
+          <p>Software Architect and Technical Lead focused on enterprise .NET, secure systems, SaaS platforms, integration-heavy solutions, and maintainable software delivery.</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/articles/">More articles</a>
+          <a class="button" href="https://www.linkedin.com/in/darawsheh/">LinkedIn</a>
+        </div>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div>
+  </footer>
+  <script src="../../assets/script.js" defer></script>
+  <!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"c49bf167d60b425c9686b4c56244eae8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
+
