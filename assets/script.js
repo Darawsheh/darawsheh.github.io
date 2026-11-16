@@ -29,6 +29,13 @@
 
   const articles = [
     {
+      slug: 'csharp-15-union-types-result-patterns',
+      title: 'C# 15 Union Types: The End of Error-Prone Result Patterns?',
+      description: 'How compiler-checked outcomes reshape API design, with practical validation, Minimal API mapping, JSON contracts, and the limits of native unions.',
+      published: '2026-11-16'
+    },
+
+    {
       slug: 'dotnet-11-runtime-async-different-engine',
       title: 'The Same async/await, a Different Engine: Inside .NET 11 Runtime Async',
       description: 'How .NET 11 moves async machinery toward the JIT, why some Task allocations disappear, and how to test the opt-in preview safely.',
