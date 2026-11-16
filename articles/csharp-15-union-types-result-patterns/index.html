@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C# 15 Union Types: The End of Error-Prone Result Patterns? | Islam Darawsheh</title>
+  <meta name="description" content="Explore C# 15 union types through real Result patterns, validation errors, exhaustive matching, JSON/OpenAPI integration, and performance trade-offs.">
+  <meta name="author" content="Islam Darawsheh">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#111827">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <link rel="canonical" href="https://darawsheh.github.io/articles/csharp-15-union-types-result-patterns/">
+  <link rel="alternate" type="application/rss+xml" title="Islam Darawsheh Articles" href="/feed.xml">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/article.css">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Islam Darawsheh">
+  <meta property="og:title" content="C# 15 Union Types: The End of Error-Prone Result Patterns?">
+  <meta property="og:description" content="Explore C# 15 union types through real Result patterns, validation errors, exhaustive matching, JSON/OpenAPI integration, and performance trade-offs.">
+  <meta property="og:url" content="https://darawsheh.github.io/articles/csharp-15-union-types-result-patterns/">
+  <meta property="og:image" content="https://darawsheh.github.io/assets/og/csharp-15-union-types-result-patterns.svg">
+  <meta property="og:image:alt" content="C# 15 Union Types: The End of Error-Prone Result Patterns?">
+  <meta property="article:published_time" content="2026-11-16">
+  <meta property="article:modified_time" content="2026-11-16">
+  <meta property="article:author" content="Islam Darawsheh">
+  <meta property="article:tag" content=".NET">
+  <meta property="article:tag" content="Union Types">
+  <meta property="article:tag" content="Validation">
+  <meta property="article:tag" content="C#">
+  <meta property="article:tag" content="API Design">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="C# 15 Union Types: The End of Error-Prone Result Patterns?">
+  <meta name="twitter:description" content="Explore C# 15 union types through real Result patterns, validation errors, exhaustive matching, JSON/OpenAPI integration, and performance trade-offs.">
+  <meta name="twitter:image" content="https://darawsheh.github.io/assets/og/csharp-15-union-types-result-patterns.svg">
+  <meta name="twitter:image:alt" content="C# 15 Union Types: The End of Error-Prone Result Patterns?">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "C# 15 Union Types: The End of Error-Prone Result Patterns?",
+    "description": "Explore C# 15 union types through real Result patterns, validation errors, exhaustive matching, JSON/OpenAPI integration, and performance trade-offs.",
+    "datePublished": "2026-11-16",
+    "dateModified": "2026-11-16",
+    "author": {
+      "@id": "https://darawsheh.github.io/islam-darawsheh/#person",
+      "@type": "Person",
+      "name": "Islam Darawsheh",
+      "url": "https://darawsheh.github.io/islam-darawsheh/",
+      "sameAs": [
+        "https://github.com/Darawsheh",
+        "https://www.linkedin.com/in/darawsheh/"
+      ]
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Islam Darawsheh"
+    },
+    "mainEntityOfPage": "https://darawsheh.github.io/articles/csharp-15-union-types-result-patterns/",
+    "keywords": [
+      ".NET",
+      "Union Types",
+      "Validation",
+      "C#",
+      "API Design"
+    ],
+    "url": "https://darawsheh.github.io/articles/csharp-15-union-types-result-patterns/",
+    "image": [
+      "https://darawsheh.github.io/assets/og/csharp-15-union-types-result-patterns.svg"
+    ],
+    "isPartOf": {
+      "@type": "Blog",
+      "@id": "https://darawsheh.github.io/articles/",
+      "name": "Islam Darawsheh Articles"
+    },
+    "wordCount": 3482,
+    "inLanguage": "en",
+    "timeRequired": "PT17M"
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to article</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/islam-darawsheh/">Profile</a>
+        <a href="/articles/">Articles</a>
+        <a href="/#contact">Connect</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="article shell">
+      <header class="article-header">
+        <p class="eyebrow">.NET · C# 15 · API Design</p>
+        <h1>C# 15 Union Types: The End of Error-Prone Result Patterns?</h1>
+        <p class="article-deck">How compiler-checked outcomes reshape API design, with practical validation, Minimal API mapping, JSON contracts, and the limits of native unions.</p>
+        <div class="article-meta">
+          <span>By Islam Darawsheh</span>
+          <time datetime="2026-11-16">November 16, 2026</time>
+          <span>17 min read</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+<p>An API that returns <code>null</code> when a record is missing, throws for a validation error, and returns a value on success may appear straightforward. But its signature communicates only one of those outcomes. The rest live in documentation, conventions, and the caller&#39;s memory.</p>
+<p>Over time, teams try to fix this with <code>bool</code> flags, nullable tuples, <code>Result&lt;T&gt;</code> wrappers, marker interfaces, and exception hierarchies. Some of those designs are excellent. Others permit impossible states or make it too easy to forget a failure path.</p>
+<p>C# 15, released with .NET 11 on November 10, 2026, adds another tool: <strong>union types</strong>. A union describes a closed set of possible types, and the compiler can check that a <code>switch</code> expression accounts for every case. This is a substantial improvement for outcome-driven APIs—but it is not the end of exceptions, and it is not automatically a replacement for every existing <code>Result&lt;T&gt;</code> library.</p>
+<p>Let&#39;s examine exactly what the language guarantees, build a realistic ordering API, and test the tradeoffs at the serialization and performance boundaries.</p>
+<h2 id="the-problem-isn-t-exceptions-it-s-invisible-outcomes">The problem isn&#39;t exceptions. It&#39;s invisible outcomes.</h2>
+<p>Consider this signature:</p>
+<pre><code class="language-csharp">Task&lt;Order?&gt; PlaceAsync(PlaceOrder command, CancellationToken ct);</code></pre>
+<p>What does <code>null</code> mean? Invalid input? An idempotent duplicate? A database outage? The type cannot tell us. We could use exceptions for the other cases, but callers would still need out-of-band knowledge of which exceptions represent expected business outcomes.</p>
+<p>A tuple-based result looks more explicit:</p>
+<pre><code class="language-csharp">public record OrderResult(
+    bool Succeeded,
+    Guid? OrderId,
+    string? Error);</code></pre>
+<p>But its shape allows nonsensical states: <code>Succeeded == true</code> with a missing <code>OrderId</code>, or a successful response carrying an error. Defensive checks move into every consumer.</p>
+<p>A properly designed custom <code>Result&lt;T&gt;</code> can already avoid many of these problems. <strong>The new contribution of unions is native composition of case types plus compiler-aware exhaustive matching</strong>, without requiring each case to inherit from a shared base class. Union types strengthen the <em>choice of outcome</em>; they do not automatically validate the fields <em>inside</em> each outcome.</p>
+<h2 id="getting-started-c-15-is-not-a-preview-feature">Getting started: C# 15 is not a preview feature</h2>
+<p>Install the .NET 11 SDK and target <code>net11.0</code>. This is the minimal setup for a class library or console application; for the later Minimal API endpoint, use the ASP.NET Core Web SDK (<code>Microsoft.NET.Sdk.Web</code>), for example with <code>dotnet new web -f net11.0</code>:</p>
+<pre><code class="language-xml">&lt;Project Sdk=&quot;Microsoft.NET.Sdk&quot;&gt;
+  &lt;PropertyGroup&gt;
+    &lt;TargetFramework&gt;net11.0&lt;/TargetFramework&gt;
+    &lt;Nullable&gt;enable&lt;/Nullable&gt;
+    &lt;ImplicitUsings&gt;enable&lt;/ImplicitUsings&gt;
+  &lt;/PropertyGroup&gt;
+&lt;/Project&gt;</code></pre>
+<p>C# 15 is the default language version for that target framework. <strong>Union types do not require <code>&lt;LangVersion&gt;preview&lt;/LangVersion&gt;</code></strong>. This matters because early .NET 11 previews <em>did</em> require extra setup, and older articles may still show it. The <code>UnionAttribute</code> and <code>IUnion</code> infrastructure are included in the released .NET 11 runtime; you do not need the hand-written polyfills used in early previews.</p>
+<p>The core syntax is intentionally small (the following examples are teaching excerpts that assume normal SDK implicit usings):</p>
+<pre><code class="language-csharp">public sealed record Accepted(Guid OrderId);
+public sealed record Rejected(string Reason);
+
+public union SubmissionOutcome(Accepted, Rejected);
+
+SubmissionOutcome outcome = new Accepted(Guid.NewGuid());
+
+string message = outcome switch
+{
+    Accepted accepted =&gt; $&quot;Accepted {accepted.OrderId}&quot;,
+    Rejected rejected =&gt; $&quot;Rejected: {rejected.Reason}&quot;,
+    null =&gt; &quot;No outcome was supplied&quot;
+};</code></pre>
+<p><code>Accepted</code> and <code>Rejected</code> are independent types. The union exposes implicit conversions from each case type. In a type pattern such as <code>Accepted accepted</code>, the compiler tests the <strong>contained value</strong>, not the union wrapper.</p>
+<p>Notice that the example uses <code>null</code>, not <code>_</code>, for its final arm. That distinction will matter when we evolve the contract.</p>
+<h2 id="a-real-application-boundary-placing-an-order">A real application boundary: placing an order</h2>
+<p>Let&#39;s model three expected outcomes:</p>
+<ul>
+<li>An order was created.</li>
+<li>The command failed validation.</li>
+<li>The idempotency key has already been used.</li>
+</ul>
+<p>The application layer can communicate those outcomes without depending on HTTP status codes. <strong>Validation is not necessarily a single error</strong>: a request can contain multiple independent problems, and clients should be able to correct all of them in one iteration. The validation case therefore holds a structured collection of errors, each with a stable code, an input field, and a human-readable message.</p>
+<pre><code class="language-csharp">public sealed record PlaceOrder(
+    Guid ProductId,
+    int Quantity,
+    string IdempotencyKey);
+
+public sealed record OrderPlaced(Guid OrderId);
+
+public sealed record ValidationError(
+    string Code,
+    string Property,
+    string Message);
+
+// Keep the error collection nonempty and prevent callers from mutating it.
+public sealed record InvalidOrder
+{
+    public IReadOnlyList&lt;ValidationError&gt; Errors { get; }
+
+    public InvalidOrder(IEnumerable&lt;ValidationError&gt; errors)
+    {
+        ArgumentNullException.ThrowIfNull(errors);
+        var snapshot = errors.ToArray();
+
+        if (snapshot.Length == 0)
+            throw new ArgumentException(
+                &quot;At least one validation error is required.&quot;, nameof(errors));
+
+        Errors = Array.AsReadOnly(snapshot);
+    }
+}
+
+public sealed record DuplicateRequest(string IdempotencyKey);
+
+public union PlaceOrderOutcome(
+    OrderPlaced,
+    InvalidOrder,
+    DuplicateRequest);
+
+public interface IOrders
+{
+    // Simplified contract: null means the key was previously used.
+    // Enforce uniqueness atomically (for example, in the database).
+    Task&lt;Guid?&gt; TryCreateAsync(PlaceOrder command, CancellationToken ct);
+}
+
+public sealed class PlaceOrderHandler(IOrders orders)
+{
+    public async Task&lt;PlaceOrderOutcome&gt; HandleAsync(
+        PlaceOrder command,
+        CancellationToken ct)
+    {
+        var errors = new List&lt;ValidationError&gt;();
+
+        if (command.ProductId == Guid.Empty)
+            errors.Add(new(
+                &quot;PRODUCT_REQUIRED&quot;, nameof(command.ProductId),
+                &quot;Product is required.&quot;));
+
+        if (command.Quantity &lt;= 0)
+            errors.Add(new(
+                &quot;INVALID_QUANTITY&quot;, nameof(command.Quantity),
+                &quot;Quantity must be greater than zero.&quot;));
+
+        if (string.IsNullOrWhiteSpace(command.IdempotencyKey))
+            errors.Add(new(
+                &quot;IDEMPOTENCY_KEY_REQUIRED&quot;, nameof(command.IdempotencyKey),
+                &quot;Idempotency key is required.&quot;));
+
+        if (errors.Count &gt; 0)
+            return new InvalidOrder(errors);
+
+        Guid? orderId = await orders.TryCreateAsync(command, ct);
+
+        if (orderId is null)
+            return new DuplicateRequest(command.IdempotencyKey);
+
+        return new OrderPlaced(orderId.Value);
+    }
+}</code></pre>
+<p>Because validation collects independent errors before returning, the caller gets actionable feedback in one response. The order of these checks is intentional: do not call the repository when the command is invalid. More complex systems should keep field-level validation distinct from business invariants that require state or concurrency checks. Stable error codes are for programmatic handling; messages can be localized without changing client logic.</p>
+<p>The <code>InvalidOrder</code> constructor makes a defensive copy and rejects an empty collection. This matters because <strong>a union prevents an invalid <em>combination of cases</em>, not an invalid <em>payload within a case</strong></em>. Without that guard, <code>new InvalidOrder([])</code> would be legal even though a failure with zero errors is contradictory. For an application using a validation library, the same invariant can be enforced in a reusable nonempty error collection.</p>
+<p>This is deliberately not an exception-free architecture. Infrastructure failures, programming defects, and cancellation still need appropriate handling. The union represents <strong>expected, modeled outcomes</strong>. Do not turn every unforeseen exception into a bland <code>UnknownFailure</code> case and lose the context needed for diagnosis.</p>
+<p>There is also a concurrency detail worth preserving: checking for an existing idempotency key and then inserting a row in two unrelated database calls is racy. The repository contract above assumes atomic enforcement, typically backed by a database uniqueness constraint.</p>
+<p><strong>Idempotency caveat:</strong> This teaching example treats <em>every</em> reused key as a conflict so that the union stays small. Its <code>DuplicateRequest</code> outcome is therefore a simplified uniqueness rejection, <strong>not</strong> a complete implementation of idempotent request replay. A production idempotent endpoint ordinarily stores a fingerprint of the original request and its response: a retry with the <em>same key and equivalent payload</em> can replay the earlier response, while the <em>same key with a different payload</em> is a conflict. Do not copy the <code>TryCreateAsync</code> contract unchanged into a payment or other high-stakes API. The main point here is how to model expected results, not a complete idempotency protocol.</p>
+<h3 id="mapping-the-union-to-a-minimal-api">Mapping the union to a Minimal API</h3>
+<p>At the HTTP boundary, each outcome gets an explicit status code. We use a separate response DTO for validation, keeping transport contracts out of the application layer:</p>
+<pre><code class="language-csharp">public sealed record ValidationErrorResponse(
+    IReadOnlyList&lt;ValidationError&gt; Errors);
+
+app.MapPost(&quot;/orders&quot;, async (
+    PlaceOrder command,
+    PlaceOrderHandler handler,
+    CancellationToken ct) =&gt;
+{
+    PlaceOrderOutcome outcome =
+        await handler.HandleAsync(command, ct);
+
+    IResult response = outcome switch
+    {
+        OrderPlaced placed =&gt;
+            TypedResults.Created($&quot;/orders/{placed.OrderId}&quot;, placed),
+
+        InvalidOrder invalid =&gt;
+            TypedResults.BadRequest(new ValidationErrorResponse(invalid.Errors)),
+
+        DuplicateRequest duplicate =&gt;
+            TypedResults.Conflict(duplicate),
+
+        null =&gt; TypedResults.Problem(
+            &quot;An unexpected error occurred.&quot;)
+    };
+
+    return response;
+})
+.Produces&lt;OrderPlaced&gt;(StatusCodes.Status201Created)
+.Produces&lt;ValidationErrorResponse&gt;(StatusCodes.Status400BadRequest)
+.Produces&lt;DuplicateRequest&gt;(StatusCodes.Status409Conflict)
+.ProducesProblem(StatusCodes.Status500InternalServerError);</code></pre>
+<p>For example, an invalid command with three independent input errors returns a single <strong>400 Bad Request</strong> containing all three errors:</p>
+<pre><code class="language-json">{
+  &quot;errors&quot;: [
+    { &quot;code&quot;: &quot;PRODUCT_REQUIRED&quot;, &quot;property&quot;: &quot;ProductId&quot;, &quot;message&quot;: &quot;Product is required.&quot; },
+    { &quot;code&quot;: &quot;INVALID_QUANTITY&quot;, &quot;property&quot;: &quot;Quantity&quot;, &quot;message&quot;: &quot;Quantity must be greater than zero.&quot; },
+    { &quot;code&quot;: &quot;IDEMPOTENCY_KEY_REQUIRED&quot;, &quot;property&quot;: &quot;IdempotencyKey&quot;, &quot;message&quot;: &quot;Idempotency key is required.&quot; }
+  ]
+}</code></pre>
+<p><code>TypedResults.ValidationProblem</code> is another option if your API standardizes on <code>ValidationProblemDetails</code>, whose errors are grouped by property name; however, that default shape does not preserve our separate machine-readable codes. Here, a purpose-built response keeps the full <code>ValidationError</code> contract. Pick one error format across your service and document it.</p>
+<p>This maps business outcomes to <strong>201</strong>, <strong>400</strong>, and <strong>409</strong> without leaking <code>IResult</code> into the application layer. It also explicitly handles the uninitialized/default union case. The <code>.Produces&lt;T&gt;()</code> calls document the response contracts that an <code>IResult</code> return type would not otherwise preserve; <code>.ProducesProblem()</code> advertises the defensive 500 path. These calls supply metadata, not runtime validation of the endpoint&#39;s actual behavior, and an OpenAPI generator must be configured to emit the document. In a real API, register <code>PlaceOrderHandler</code> and <code>IOrders</code> with dependency injection, avoid exposing sensitive error details, and test that runtime responses match the declared metadata.</p>
+<p>ASP.NET Core also offers <code>Results&lt;T1, T2, ...&gt;</code> for strongly typed HTTP result alternatives. That solves a <strong>transport-layer</strong> concern (including metadata inference), not the same problem as a C# union of <strong>application-layer</strong> outcomes.</p>
+<p>A final distinction: malformed JSON or a body that cannot be deserialized can fail during ASP.NET Core binding, <em>before</em> this handler runs. Aggregated business-validation errors are not a promise that all protocol/binding failures will use the same shape. Standardize those errors separately if the client contract requires it.</p>
+<h2 id="exhaustiveness-the-most-important-benefit">Exhaustiveness: the most important benefit</h2>
+<p>Suppose the business introduces a fourth outcome:</p>
+<pre><code class="language-csharp">public sealed record RateLimited(TimeSpan RetryAfter);
+
+public union PlaceOrderOutcome(
+    OrderPlaced,
+    InvalidOrder,
+    DuplicateRequest,
+    RateLimited);</code></pre>
+<p>Our existing <code>switch</code> expression no longer covers every case. C# issues an exhaustiveness warning (typically <strong>CS8509</strong>) and identifies the missing pattern. With a build policy that treats the relevant warnings as errors, this becomes a CI gate. Without that policy, it is a <strong>warning</strong>, not a universal compile-time error.</p>
+<p>This is why the distinction between these two fallbacks matters:</p>
+<pre><code class="language-csharp">// Discouraged when the point is future-case exhaustiveness:
+_ =&gt; TypedResults.Problem(&quot;Unexpected outcome&quot;)
+
+// Preferred for handling the generated struct&#39;s empty state:
+null =&gt; TypedResults.Problem(&quot;Uninitialized outcome&quot;)</code></pre>
+<p>A discard (<code>_</code>) matches <em>new case types too</em>, hiding the warning when the union grows. A <code>null</code> arm covers only the empty case and leaves new outcomes visible to the compiler.</p>
+<p>The exhaustiveness feature applies to <strong>switch expressions</strong>. Do not assume an ordinary <code>if</code> chain or <code>switch</code> statement gives you the same completeness guarantee. A useful CI policy is to elevate <code>CS8509</code> and the nullable-pattern warning <code>CS8655</code> to errors; treat the latter as an additional safeguard, not as a substitute for deliberately handling <code>default</code>.</p>
+<h2 id="the-subtle-default-and-null-trap">The subtle <code>default</code> and <code>null</code> trap</h2>
+<p>A generated union is a struct, with a stored <code>object?</code> value. Its default value is therefore valid as a .NET struct value but contains <strong>no active case</strong>:</p>
+<pre><code class="language-csharp">PlaceOrderOutcome outcome = default;
+Console.WriteLine(outcome.Value is null); // True</code></pre>
+<p>This can happen in default-initialized fields, array elements, or framework-created objects. Even if every declared case type is non-nullable, C# does not necessarily warn when your switch omits the <code>null</code> arm. A case-only switch can then throw <code>SwitchExpressionException</code> at runtime.</p>
+<p>The practical rule is: <strong>handle <code>null</code> explicitly wherever an uninitialized union could arrive</strong>, especially at public boundaries. That arm is not a replacement for normal input validation. It is a safeguard against a real limitation of the representation.</p>
+<p>Another subtlety: <code>union</code> does not produce an F#-style tagged discriminated union automatically. The cases are <strong>types</strong>, not separately named tags. If you need two outcomes that both carry <code>string</code>, create distinct case records instead of trying to rely on the payload type alone.</p>
+<pre><code class="language-csharp">public sealed record EmailAccepted(string Address);
+public sealed record EmailRejected(string Reason);
+public union EmailOutcome(EmailAccepted, EmailRejected);</code></pre>
+<p>For generic results, wrappers are particularly valuable:</p>
+<pre><code class="language-csharp">public sealed record Ok&lt;T&gt;(T Value);
+public sealed record NotFound(string Resource, string Key);
+public sealed record ValidationFailed(IReadOnlyList&lt;string&gt; Errors);
+
+public union QueryOutcome&lt;T&gt;(
+    Ok&lt;T&gt;,
+    NotFound,
+    ValidationFailed);</code></pre>
+<p>Using <code>Ok&lt;T&gt;</code> avoids overlap when <code>T</code> happens to be an error type. It also provides a place to attach future success-specific behavior. Unions do allow overlapping case types, but ambiguous implicit conversions and overlapping patterns can make contracts harder to reason about.</p>
+<h2 id="what-actually-gets-generated-and-why-performance-is-not-free">What actually gets generated—and why performance is not free</h2>
+<p>Conceptually, a union declaration is lowered to a struct with a constructor for each case and a single <code>object?</code>-backed <code>Value</code> property:</p>
+<pre><code class="language-csharp">// Conceptual approximation, not compiler-generated source:
+public struct SubmissionOutcomeConcept
+{
+    public SubmissionOutcomeConcept(Accepted value) =&gt; Value = value;
+    public SubmissionOutcomeConcept(Rejected value) =&gt; Value = value;
+
+    public object? Value { get; }
+}</code></pre>
+<p>The real generated type is marked with <code>UnionAttribute</code> and implements <code>IUnion</code>; the compiler adds its union-specific conversion and matching behavior. The approximation above only illustrates the storage model.</p>
+<p>This has important consequences:</p>
+<ul>
+<li>A value-type case such as <code>int</code>, <code>Guid</code>, or <code>decimal</code> is <strong>boxed</strong> by the generated union.</li>
+<li>Reference-type cases are held through the <code>object?</code> reference; the union wrapper itself is a struct.</li>
+<li>A case modeled as a <code>record class</code> has its own allocation characteristics. A union does not erase them.</li>
+<li>A union is not inherently faster than a hand-tuned <code>Result&lt;T&gt;</code> using dedicated fields and a tag.</li>
+</ul>
+<p>For hot paths, C# 15 also recognizes <strong>custom unions</strong> marked with <code>[Union]</code>. Those types can provide <code>HasValue</code> and typed <code>TryGetValue</code> members so the compiler can perform matching without boxing value types. The official tutorial includes a custom numeric union that demonstrates this pattern.</p>
+<p>The recommendation is simple: <strong>choose unions for modeling clarity first, and benchmark before claiming a throughput or allocation win</strong>. Measure your actual case distribution, allocation rate, and serializer behavior with BenchmarkDotNet rather than assuming the keyword is a performance optimization.</p>
+<h2 id="json-asp-net-core-and-openapi-more-capable-than-you-might-expect">JSON, ASP.NET Core, and OpenAPI: more capable than you might expect</h2>
+<p>A common concern with new language constructs is whether they work at API boundaries. In .NET 11, <code>System.Text.Json</code> has <strong>native union serialization and deserialization support</strong>. It serializes the active case value, rather than a <code>{ &quot;Value&quot;: ... }</code> envelope:</p>
+<pre><code class="language-csharp">using System.Text.Json;
+
+public sealed record Message(string Text);
+public union Payload(int, string, Message);
+
+Payload payload = new Message(&quot;Ready&quot;);
+string json = JsonSerializer.Serialize(payload);
+
+// {&quot;Text&quot;:&quot;Ready&quot;}</code></pre>
+<p>Writing is straightforward. <strong>Reading can be ambiguous.</strong> The default classifier distinguishes JSON token kinds: a number, string, Boolean, object, or array. Two record cases generally both look like JSON objects, so the serializer cannot identify one merely from the token kind.</p>
+<p>.NET 11 offers a structural classifier for distinguishable object shapes:</p>
+<pre><code class="language-csharp">using System.Text.Json;
+using System.Text.Json.Serialization;
+
+[JsonUnion(TypeClassifier = typeof(JsonUnionTypeStructuralClassifier))]
+public union Pet(Dog, Cat);
+
+public sealed record Dog(string Name, string Breed);
+public sealed record Cat(string Name, int Lives);</code></pre>
+<p>A JSON object containing <code>Breed</code> can be classified as <code>Dog</code>; one containing <code>Lives</code> can be classified as <code>Cat</code>. But overlapping properties, changes to contract shapes, and certain nested or polymorphic cases can defeat structural classification. There are custom classifiers for advanced needs.</p>
+<p>There is a more surprising edge case: under ASP.NET Core&#39;s web JSON defaults, numbers can sometimes be read from JSON strings. A union of <code>int</code> and <code>string</code> can therefore be ambiguous on <strong>input</strong>, even though its two output shapes are obvious. Test both the serialize and deserialize paths using the actual production options.</p>
+<p>ASP.NET Core 11 supports unions in <strong>JSON request/response bodies</strong>, including Minimal APIs and MVC; its JSON-based SignalR and relevant Blazor serialization paths also support them. It does <strong>not</strong> directly bind union values from route parameters, query strings, headers, or form fields. OpenAPI generation represents a union&#39;s possible schemas using <strong><code>anyOf</code></strong>. That support does not absolve you from documenting the distinct <strong>HTTP status codes</strong> returned by your own <code>IResult</code> mapping.</p>
+<p>For a new public JSON contract whose cases are all classes you own, consider the other C# 15 feature: <strong>closed hierarchies</strong>. Paired with <code>[JsonPolymorphic(InferClosedTypePolymorphism = true)]</code>, they can emit an explicit <code>$type</code> discriminator and give clients more stable case identification when object shapes overlap. Unions are especially compelling when composing unrelated existing types or preserving an existing discriminator-free format.</p>
+<h2 id="union-types-vs-traditional-alternatives">Union types vs. traditional alternatives</h2>
+<div class="table-scroll"><table><thead><tr><th>Approach</th><th>Expected outcomes visible in the signature?</th><th>Exhaustiveness checked by the compiler?</th><th>Main tradeoff</th></tr></thead><tbody><tr><td>Exceptions</td><td>Usually not</td><td>No</td><td>Appropriate for exceptional failures; poor as an implicit catalog of routine outcomes</td></tr>
+<tr><td><code>T?</code> / nullable return</td><td>Only success vs. absence</td><td>No</td><td>Too little information when failure has several meanings</td></tr>
+<tr><td>Boolean flag / tuple</td><td>Partially</td><td>No</td><td>Can permit contradictory or incomplete states</td></tr>
+<tr><td>Hand-written <code>Result&lt;T&gt;</code></td><td>Yes, if carefully designed</td><td>Depends on its API and analyzers</td><td>Can offer ergonomic helpers and efficient storage, but often requires more infrastructure</td></tr>
+<tr><td>C# 15 <code>union</code></td><td>Yes: a closed set of case types</td><td><strong>Yes, for union switch expressions</strong></td><td>Concise and language-integrated; generated representation can box value types and has an empty <code>default</code> state</td></tr>
+<tr><td>C# 15 <code>closed</code> hierarchy</td><td>Yes, through derived classes</td><td><strong>Yes, for supported exhaustive patterns</strong></td><td>Strong fit for related classes you own, but requires inheritance</td></tr></tbody></table></div>
+<p>A mature Result library may still be preferable when your team relies on <code>Map</code>, <code>Bind</code>, <code>Match</code>, <code>Tap</code>, async composition, validation accumulation, or a stable cross-target-framework API. Native unions do not automatically provide that entire functional vocabulary. And a custom library can opt into C# 15 union matching by implementing the documented <code>[Union]</code> shape—it need not be replaced wholesale.</p>
+<h2 id="adoption-guidelines-for-production-teams">Adoption guidelines for production teams</h2>
+<ol>
+<li><strong>Start at one application boundary.</strong> Try a query handler or command handler with three or four well-defined outcomes, not a repository-wide conversion.</li>
+<li><strong>Name cases semantically.</strong> <code>OrderPlaced</code> and <code>DuplicateRequest</code> convey intent better than <code>string</code> and <code>Exception</code>.</li>
+<li><strong>Return multiple independent validation errors together.</strong> Use stable machine-readable codes and property paths rather than a single unstructured string; do not confuse predictable input errors with infrastructure failures.</li>
+<li><strong>Keep unexpected failures exceptional.</strong> Preserve telemetry, stack traces, cancellation, and retry semantics rather than forcing all failures into a union.</li>
+<li><strong>Use exhaustive <code>switch</code> expressions and explicit <code>null</code> handling.</strong> Avoid <code>_</code> in switches meant to flag newly added cases; consider treating exhaustiveness warnings as CI errors.</li>
+<li><strong>Keep transport concerns at the boundary.</strong> HTTP results, JSON shapes, and error contracts should not drive domain-type design accidentally; document status codes and response schemas explicitly.</li>
+<li><strong>Test real integration behavior.</strong> Cover serialization round-trips, ambiguous JSON cases, OpenAPI output, default-initialized unions, and allocation-sensitive scenarios. Verify that invalid requests return <em>all</em> independent errors and that a reused key follows your chosen idempotency policy.</li>
+<li><strong>Respect framework constraints.</strong> Teams staying on .NET 10 LTS can retain their existing Result patterns; .NET 11 is an STS release, so a migration should be justified by benefits beyond adopting a keyword.</li>
+</ol>
+<h2 id="production-implementation-checklist">Production implementation checklist</h2>
+<p>These examples are intended for an SDK-style <code>net11.0</code> project. Before treating these examples as production-tested guidance, compile the code with the released .NET 11 SDK and exercise the complete endpoint with a real <code>IOrders</code> implementation. At minimum, verify:</p>
+<ul>
+<li>The three ordinary outcomes and the <code>default(PlaceOrderOutcome)</code> path.</li>
+<li>A request with several invalid fields returns <em>all</em> error codes and properties in a single 400 response.</li>
+<li>OpenAPI documents 201, 400, 409, and 500 with the intended response schemas.</li>
+<li>Repeated keys are handled atomically, and the documented production replay/conflict semantics are implemented if adopting this design beyond the teaching sample.</li>
+<li>JSON serialize/deserialize behavior under the <strong>actual</strong> ASP.NET Core serializer settings, including ambiguous union cases.</li>
+<li>An intentionally omitted union case triggers a compiler warning; configure the build to fail on that warning.</li>
+</ul>
+<p>The article&#39;s snippets are focused teaching excerpts, <strong>not a complete deployable API</strong>: dependency-injection registrations, persistence, authentication, exception handling, and integration tests are intentionally outside their scope.</p>
+<h2 id="so-is-this-the-end-of-result-t">So, is this the end of <code>Result&lt;T&gt;</code>?</h2>
+<p>No—and that&#39;s precisely what makes C# 15 unions interesting.</p>
+<p>The real advance is not that developers can finally return “success or failure.” They have been doing that for years. The advance is that <strong>the language now understands a closed set of outcomes</strong>, offers concise implicit conversions, and can warn when a caller forgets an added case.</p>
+<p>For many application services, this removes boilerplate and makes the contract harder to misuse. For other workloads, a carefully implemented Result type, a closed hierarchy, or an exception remains the better abstraction. A union is an additional design tool, not an architectural ideology.</p>
+<p>The question to ask in code review is therefore not <em>“Can we replace our Result library?”</em> It is: <strong>“Can a reader see every expected outcome in the type signature—and will the compiler tell us when that contract changes?”</strong></p>
+<p>If the answer becomes yes, union types have already earned their place.</p>
+<hr>
+<h3 id="official-references">Official references</h3>
+<ol>
+<li><a href="https://devblogs.microsoft.com/dotnet/announcing-dotnet-11/">.NET Team — Announcing .NET 11 (November 10, 2026)</a></li>
+<li><a href="https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15">Microsoft Learn — What&#39;s new in C# 15</a></li>
+<li><a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/union">Microsoft Learn — Union types (C# reference)</a></li>
+<li><a href="https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/unions">Microsoft Learn — Tutorial: Explore C# union types</a></li>
+<li><a href="https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/union-types">Microsoft Learn — Serialize union types with System.Text.Json</a></li>
+<li><a href="https://devblogs.microsoft.com/dotnet/unions-and-closed-hierarchies-in-aspnetcore/">.NET Blog — Use C# unions and closed hierarchies in ASP.NET Core</a></li>
+<li><a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-15.0/unions">Microsoft Learn — C# 15 union feature specification</a></li>
+<li><a href="https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/include-metadata">Microsoft Learn — Include OpenAPI metadata in an ASP.NET Core app</a></li>
+<li><a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-messages/pattern-matching-warnings">Microsoft Learn — Pattern-matching diagnostics (CS8509 / CS8655)</a></li>
+</ol>
+      </div>
+
+      <section class="related-articles" aria-labelledby="related-articles-title"><p class="eyebrow">Continue reading</p><h2 id="related-articles-title">Related articles</h2><ul><li><a href="/articles/dotnet-11-runtime-async-different-engine/">Inside .NET 11 Runtime Async</a><span>Explore the next generation of asynchronous execution.</span></li><li><a href="/articles/ef-core-11-same-linq-better-sql/">Same LINQ, Better SQL: Inside EF Core 11</a><span>See how language and framework improvements affect application code.</span></li><li><a href="/articles/clean-architecture-dotnet-10-without-ceremony/">Clean Architecture in .NET 10</a><span>Protect application boundaries without unnecessary abstractions.</span></li></ul></section>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p class="comments-intro">Are you adopting C# 15 unions in production, or keeping your Result types? Share the trade-offs.</p>
+        <script src="https://giscus.app/client.js"
+                data-repo="Darawsheh/darawsheh.github.io"
+                data-repo-id="R_kgDOTv89MQ"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOTv89Mc4DC0Gm"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
+      </section>
+
+      <footer class="article-footer">
+        <div>
+          <p class="eyebrow">About the author</p>
+          <h2>Islam Darawsheh</h2>
+          <p>Software Architect and Technical Lead focused on enterprise .NET, secure systems, SaaS platforms, integration-heavy solutions, and maintainable software delivery.</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/articles/">More articles</a>
+          <a class="button" href="https://www.linkedin.com/in/darawsheh/">LinkedIn</a>
+        </div>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div>
+  </footer>
+  <script src="../../assets/script.js" defer></script>
+  <!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"c49bf167d60b425c9686b4c56244eae8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
+

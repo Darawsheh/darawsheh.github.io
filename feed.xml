@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>C# 15 Union Types: The End of Error-Prone Result Patterns?</title>
+      <link>https://darawsheh.github.io/articles/csharp-15-union-types-result-patterns/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/csharp-15-union-types-result-patterns/</guid>
+      <pubDate>Mon, 16 Nov 2026 06:00:00 GMT</pubDate>
+      <description>How compiler-checked outcomes reshape API design, with practical validation, Minimal API mapping, JSON contracts, and the limits of native unions.</description>
+    </item>
+    <item>
       <title>The Same async/await, a Different Engine: Inside .NET 11 Runtime Async</title>
       <link>https://darawsheh.github.io/articles/dotnet-11-runtime-async-different-engine/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/dotnet-11-runtime-async-different-engine/</guid>
