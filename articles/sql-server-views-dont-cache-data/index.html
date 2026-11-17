@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Server Views Don&#39;t Cache Data — So When Are They Actually Faster? | Islam Darawsheh</title>
+  <meta name="description" content="Regular vs. indexed SQL Server views, computed columns, NVARCHAR parsing, release history, and an honest benchmark design for SQL Server 2025 and 2022.">
+  <meta name="author" content="Islam Darawsheh">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#111827">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' https://giscus.app https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <link rel="canonical" href="https://darawsheh.github.io/articles/sql-server-views-dont-cache-data/">
+  <link rel="alternate" type="application/rss+xml" title="Islam Darawsheh Articles" href="/feed.xml">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/article.css">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Islam Darawsheh">
+  <meta property="og:title" content="SQL Server Views Don&#39;t Cache Data — So When Are They Actually Faster?">
+  <meta property="og:description" content="Regular vs. indexed SQL Server views, computed columns, NVARCHAR parsing, release history, and an honest benchmark design for SQL Server 2025 and 2022.">
+  <meta property="og:url" content="https://darawsheh.github.io/articles/sql-server-views-dont-cache-data/">
+  <meta property="og:image" content="https://darawsheh.github.io/assets/og/sql-server-views-dont-cache-data.svg">
+  <meta property="og:image:alt" content="SQL Server Views Don&#39;t Cache Data — So When Are They Actually Faster?">
+  <meta property="article:published_time" content="2026-11-17">
+  <meta property="article:modified_time" content="2026-11-17">
+  <meta property="article:author" content="Islam Darawsheh">
+  <meta property="article:tag" content="SQL Server">
+  <meta property="article:tag" content="Query Performance">
+  <meta property="article:tag" content="Indexed Views">
+  <meta property="article:tag" content="Computed Columns">
+  <meta property="article:tag" content="EF Core">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SQL Server Views Don&#39;t Cache Data — So When Are They Actually Faster?">
+  <meta name="twitter:description" content="Regular vs. indexed SQL Server views, computed columns, NVARCHAR parsing, release history, and an honest benchmark design for SQL Server 2025 and 2022.">
+  <meta name="twitter:image" content="https://darawsheh.github.io/assets/og/sql-server-views-dont-cache-data.svg">
+  <meta name="twitter:image:alt" content="SQL Server Views Don&#39;t Cache Data — So When Are They Actually Faster?">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"SQL Server Views Don't Cache Data — So When Are They Actually Faster?","description":"Regular vs. indexed SQL Server views, computed columns, NVARCHAR parsing, release history, and an honest benchmark design for SQL Server 2025 and 2022.","datePublished":"2026-11-17","dateModified":"2026-11-17","author":{"@id":"https://darawsheh.github.io/islam-darawsheh/#person","@type":"Person","name":"Islam Darawsheh","url":"https://darawsheh.github.io/islam-darawsheh/","sameAs":["https://github.com/Darawsheh","https://www.linkedin.com/in/darawsheh/"]},"publisher":{"@type":"Person","name":"Islam Darawsheh"},"mainEntityOfPage":"https://darawsheh.github.io/articles/sql-server-views-dont-cache-data/","keywords":["SQL Server","Query Performance","Indexed Views","Computed Columns","EF Core"],"url":"https://darawsheh.github.io/articles/sql-server-views-dont-cache-data/","image":["https://darawsheh.github.io/assets/og/sql-server-views-dont-cache-data.svg"],"isPartOf":{"@type":"Blog","@id":"https://darawsheh.github.io/articles/","name":"Islam Darawsheh Articles"},"wordCount":2208,"inLanguage":"en","timeRequired":"PT13M"}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to article</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Islam Darawsheh home">ID</a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/islam-darawsheh/">Profile</a>
+        <a href="/articles/">Articles</a>
+        <a href="/#contact">Connect</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme">Theme</button>
+    </div>
+  </header>
+
+
+  <main id="main">
+    <article class="article shell">
+      <header class="article-header">
+        <p class="eyebrow">SQL Server · Query Performance · Database Design</p>
+        <h1>SQL Server Views Don&#39;t Cache Data — So When Are They Actually Faster?</h1>
+        <p class="article-deck">Regular views, indexed views, and computed columns: what SQL Server actually stores, what the optimizer can rewrite, and how to test parsing-heavy queries.</p>
+        <div class="article-meta">
+          <span>By Islam Darawsheh</span>
+          <time datetime="2026-11-17">November 17, 2026</time>
+          <span>13 min read</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+<p>A question worth asking before creating your next SQL Server view is deceptively simple:</p>
+<blockquote><p>If a view doesn&#39;t cache query results, why should I use one? Couldn&#39;t I execute the SQL directly from my .NET application, with the exact filters I need, and get a faster result?</p></blockquote>
+<p>The question exposes a common architectural misconception. A regular SQL Server view is not a performance feature by itself. But it isn&#39;t necessarily a performance penalty either. And once an application repeatedly parses a delimited <code>NVARCHAR</code> field, the more interesting optimization might be neither a regular view nor an indexed view: it might be an <strong>indexed computed column</strong>.</p>
+<p>Let&#39;s separate abstraction, materialization, indexing, and actual query performance.</p>
+<h2 id="1-what-a-regular-view-actually-does">1. What a regular view actually does</h2>
+<p>Consider a table and a view that exposes a friendlier projection:</p>
+<pre><code class="language-sql">CREATE VIEW dbo.vActiveOrders
+AS
+SELECT OrderId, CustomerId, OrderDate
+FROM dbo.Orders
+WHERE IsActive = 1;
+GO
+
+SELECT OrderId, OrderDate
+FROM dbo.vActiveOrders
+WHERE CustomerId = 42;</code></pre>
+<p>The view stores its <em>definition</em>, not a stored copy of matching rows. When queried, SQL Server&#39;s optimizer can expand the view, combine its logic with the outer query, and consider appropriate access paths on the underlying tables. The equivalent direct query may produce the same execution plan:</p>
+<pre><code class="language-sql">SELECT OrderId, OrderDate
+FROM dbo.Orders
+WHERE IsActive = 1
+  AND CustomerId = 42;</code></pre>
+<p>There is no requirement for SQL Server to first load every active order and then filter by customer. The optimizer can push eligible predicates down and choose an index seek when a suitable index and cost estimate justify it.</p>
+<p><strong>Important qualification:</strong> This is an opportunity, not a guarantee. Query shape matters. <code>TOP</code>, aggregation, window functions, <code>DISTINCT</code>, complex nesting, and other constructs can restrict which transformations are valid. Check the <em>actual execution plan</em> rather than assuming SQL Server will always rewrite a query as you imagined.</p>
+<p>So why use a regular view? For <strong>a stable database contract, reused joins/business definitions, controlled column exposure, and maintainability</strong>. Those are legitimate architectural reasons—just don&#39;t describe them as automatic caching.</p>
+<h3 id="what-about-sql-servers-caches">What about SQL Server&#39;s caches?</h3>
+<p>Three different concepts often get confused:</p>
+<ul><li><strong>Buffer pool:</strong> retains frequently accessed data and index pages in memory. Subsequent queries may avoid physical disk reads, whether they query a table or a view.</li><li><strong>Execution-plan cache:</strong> may reuse compiled query plans. Reusing a plan is not reusing its previous result set.</li><li><strong>Indexed view:</strong> physically maintains the view&#39;s result in an index. This is materialization, not a time-limited application cache.</li></ul>
+<p>If a regular view returns old-looking data, investigate transaction isolation, replicas, application caching, or other layers; the view itself is not a stored snapshot.</p>
+<h2 id="2-which-sql-server-version-introduced-these-features">2. Which SQL Server version introduced these features?</h2>
+<p>These capabilities predate SQL Server 2025. The article uses 2025 as the current <em>reference target</em>, not because indexed views are new.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Feature</th><th scope="col">First known release / availability</th><th scope="col">Notes</th></tr></thead><tbody><tr><td>Regular views</td><td>Earlier than SQL Server 2000</td><td>Long-standing relational abstraction.</td></tr><tr><td>Computed columns</td><td>SQL Server 7.0 or earlier</td><td>Microsoft&#39;s historical documentation confirms availability in 7.0.</td></tr><tr><td>Indexed views</td><td>SQL Server 2000</td><td>A key feature introduced with SQL Server 2000.</td></tr><tr><td>Indexes on computed columns</td><td>SQL Server 2000</td><td>Also documented as an SQL Server 2000 enhancement.</td></tr><tr><td><code>PERSISTED</code> computed columns</td><td>SQL Server 2005</td><td>Adds physical storage of computed values in the base table.</td></tr><tr><td><code>STRING_SPLIT</code></td><td>SQL Server 2016 (13.x)</td><td>Normally requires compatibility level 130 or later.</td></tr><tr><td><code>STRING_SPLIT</code> with <code>ordinal</code></td><td>SQL Server 2022 (16.x)</td><td>Preserves position <em>as a value</em>, not guaranteed output order without <code>ORDER BY</code>.</td></tr><tr><td><code>SUBSTRING</code> with optional length</td><td>SQL Server 2025 (17.x)</td><td>Earlier boxed SQL Server versions require the length argument.</td></tr></tbody></table></div>
+<p>As of <strong>November 17, 2026</strong>, Microsoft&#39;s SQL Server 2025 build history identifies <strong>CU11, build <code>17.0.5065.9</code></strong>, released <strong>November 12, 2026</strong>. That is a recommended patch <em>target</em> for an eventual 2025 test, <strong>not a claim that the examples were tested on that build</strong>.</p>
+<p>A production-grade benchmark must report both the <strong>engine version</strong> and <strong>database compatibility level</strong>. Running SQL Server 2025 at compatibility 160 is not the same experiment as running the SQL Server 2022 engine at 160.</p>
+<h2 id="3-indexed-views-actual-materialization-with-a-cost">3. Indexed views: actual materialization, with a cost</h2>
+<p>An indexed view begins life as a view created with <code>WITH SCHEMABINDING</code>. It becomes physically materialized when you create its first <strong>unique clustered index</strong>. You can then add nonclustered indexes.</p>
+<pre><code class="language-sql">-- Requires dbo.Documents(DocumentId bigint NOT NULL, CompositeValue nvarchar(100) NOT NULL)
+-- and the documented required SET options; see the reproducible script.
+CREATE VIEW dbo.vDocumentParts
+WITH SCHEMABINDING
+AS
+SELECT
+    DocumentId,
+    LEFT(CompositeValue, CHARINDEX(N&#39;|&#39;, CompositeValue) - 1) AS Code,
+    SUBSTRING(CompositeValue, CHARINDEX(N&#39;|&#39;, CompositeValue) + 1, 100) AS Status
+FROM dbo.Documents;
+GO
+
+CREATE UNIQUE CLUSTERED INDEX CIX_vDocumentParts
+    ON dbo.vDocumentParts (DocumentId);
+GO
+
+CREATE NONCLUSTERED INDEX IX_vDocumentParts_Code
+    ON dbo.vDocumentParts (Code)
+    INCLUDE (Status);
+GO</code></pre>
+<p>This deliberately simple example assumes <strong>exactly one delimiter</strong>, with nonempty parts. Validate or constrain input data before adopting expressions that subtract one from <code>CHARINDEX</code>.</p>
+<p>Queries can explicitly target the stored view:</p>
+<pre><code class="language-sql">SELECT DocumentId, Code, Status
+FROM dbo.vDocumentParts WITH (NOEXPAND)
+WHERE Code = N&#39;ABC&#39;;</code></pre>
+<p><code>NOEXPAND</code> tells SQL Server to consider the indexed view as a materialized access path rather than expand it into base-table logic. <strong>It does not guarantee an index seek</strong>; index choice still depends on the optimizer. <code>INDEX(...)</code> adds stronger hints but should not be a default tuning strategy.</p>
+<h3 id="edition-changes-the-story">Edition changes the story</h3>
+<p>For <strong>SQL Server 2025</strong>, Microsoft documents the following behavior:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Capability</th><th scope="col">Enterprise</th><th scope="col">Standard</th><th scope="col">Express</th></tr></thead><tbody><tr><td>Create indexed views</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Query indexed views</td><td>Yes</td><td>Yes, with <code>NOEXPAND</code></td><td>Yes, with <code>NOEXPAND</code></td></tr><tr><td>Automatic indexed-view matching/substitution</td><td>Yes</td><td>No</td><td>No</td></tr></tbody></table></div>
+<p>This matters even when the T-SQL looks identical. SQL Server 2025 also provides <strong>Enterprise Developer</strong> and <strong>Standard Developer</strong> editions for development/testing, allowing edition-aware experiments without production licenses.</p>
+<h3 id="the-price-of-materialization">The price of materialization</h3>
+<p>When an underlying row changes, SQL Server must maintain the relevant indexed-view rows and indexes as part of the data modification. That adds index storage, transaction-log activity, and potential <code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code> cost. <code>SCHEMABINDING</code> also constrains schema changes, and eligible indexed-view definitions must meet strict rules: deterministic expressions, correct ownership, supported constructs, and particular session <code>SET</code> options.</p>
+<p>Microsoft highlights large aggregations as a common strong use case. Materializing a simple two-part string projection can work, but it is not automatically the best design.</p>
+<h2 id="4-the-more-interesting-case-splitting-an-nvarchar-column">4. The more interesting case: splitting an <code>NVARCHAR</code> column</h2>
+<p>Imagine a legacy integration that stores two independent values in one field:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">DocumentId</th><th scope="col">CompositeValue</th></tr></thead><tbody><tr><td>1</td><td><code>ABC|ACTIVE</code></td></tr><tr><td>2</td><td><code>XYZ|ARCHIVED</code></td></tr><tr><td>3</td><td><code>ABC|PENDING</code></td></tr></tbody></table></div>
+<p>We need <code>Code</code> and <code>Status</code> as separate queryable values. Assume the separator format is consistent.</p>
+<p>A regular view is easy:</p>
+<pre><code class="language-sql">CREATE VIEW dbo.vParsedDocuments
+AS
+SELECT
+    DocumentId,
+    LEFT(CompositeValue, CHARINDEX(N&#39;|&#39;, CompositeValue) - 1) AS Code,
+    SUBSTRING(CompositeValue, CHARINDEX(N&#39;|&#39;, CompositeValue) + 1, 100) AS Status
+FROM dbo.Documents;
+GO</code></pre>
+<p>It centralizes the parsing rule, but it does not store the parsed values. A query such as <code>WHERE Code = N&#39;ABC&#39;</code> may need to evaluate an expression over many candidate rows if there is no useful indexed access path.</p>
+<h3 id="alternative-a-a-nonpersisted-computed-column">Alternative A: a nonpersisted computed column</h3>
+<pre><code class="language-sql">ALTER TABLE dbo.Documents
+ADD Code AS
+    LEFT(CompositeValue, CHARINDEX(N&#39;|&#39;, CompositeValue) - 1);
+GO</code></pre>
+<p>This exposes the parsed value on the table without physically storing the computed column in the base row. By itself, that is not a magic speed boost. However, <strong>a deterministic, precise, indexable computed column can often be indexed without <code>PERSISTED</code></strong>:</p>
+<pre><code class="language-sql">CREATE INDEX IX_Documents_Code
+    ON dbo.Documents (Code);
+GO</code></pre>
+<p>Now a predicate on <code>Code</code> has a potential indexed access path. The index physically stores its key values even though the computed column is nonpersisted in the base row. That distinction is frequently missed.</p>
+<h3 id="alternative-b-a-persisted-computed-column">Alternative B: a persisted computed column</h3>
+<pre><code class="language-sql">-- Alternative design: run on a separate equivalent table,
+-- not on the table already carrying the previous Code column.
+ALTER TABLE dbo.Documents
+ADD Code AS
+    LEFT(CompositeValue, CHARINDEX(N&#39;|&#39;, CompositeValue) - 1)
+    PERSISTED;
+GO
+
+CREATE INDEX IX_Documents_Code
+    ON dbo.Documents (Code);
+GO</code></pre>
+<p>Here SQL Server stores the computed value in the base row and maintains it on changes. You may also index it, but <strong>persisting and indexing are separate choices</strong>. Persistence can reduce recalculation costs for some read patterns and is necessary for certain otherwise-indexable scenarios; it also increases base-row storage and write maintenance. The fastest choice must be measured under the actual workload.</p>
+<p><strong>A likely practical conclusion—not a benchmark result:</strong> If your task is to filter frequently on a parsed, row-local value, a properly designed indexed computed column often deserves testing before an indexed view. If you primarily fetch a handful of records by primary key, parsing on demand may already be inexpensive.</p>
+<h3 id="why-not-simply-use-string-split">Why not simply use <code>STRING_SPLIT</code>?</h3>
+<p><code>STRING_SPLIT</code> returns <strong>rows</strong>, not fixed <code>Code</code> and <code>Status</code> columns. SQL Server 2022 added <code>enable_ordinal = 1</code>, which reports positions, but the returned row order still requires an explicit <code>ORDER BY</code> if order matters. Moreover, indexed-view definitions do not allow table-valued functions or <code>CROSS APPLY</code>/<code>OUTER APPLY</code>. It isn&#39;t a drop-in replacement for a deterministic scalar expression inside this indexed view.</p>
+<p>If the source data is actually JSON, use the appropriate JSON features instead of pretending it is a pipe-delimited format. If you control the schema, the first question should be whether <code>Code</code> and <code>Status</code> ought to be <strong>real columns</strong> at all.</p>
+<h2 id="5-does-ef-core-change-the-answer">5. Does EF Core change the answer?</h2>
+<p>No. A well-composed EF Core query and a direct T-SQL statement are ultimately optimized by SQL Server. The key is <strong>where filtering happens</strong>.</p>
+<pre><code class="language-csharp">// Good: filtering and projection are translated to SQL.
+var docs = await db.Documents
+    .Where(d =&gt; d.DocumentId == requestedId)
+    .Select(d =&gt; new { d.DocumentId, d.CompositeValue })
+    .ToListAsync();
+
+// Bad for large sets: everything is fetched before filtering.
+var all = await db.Documents.ToListAsync();
+var docsInMemory = all.Where(d =&gt; d.DocumentId == requestedId).ToList();</code></pre>
+<p>A mapped view can also be queried with additional <code>Where</code> clauses, and EF Core can compose them into SQL when the mapping and query are translatable. Filtering in the application after materialization is not an argument against views; it is usually a data-access mistake.</p>
+<p>An ORM does not make expensive string expressions disappear, either. If the bottleneck is repeatedly computing a parsed key for a wide range of rows, solve that database access problem, not merely the location of the SQL string.</p>
+<h2 id="6-a-fair-benchmark-six-configurations-zero-invented-numbers">6. A fair benchmark: six configurations, zero invented numbers</h2>
+<p>To move beyond plausible explanations, compare the following configurations using the <em>same generated values</em> on separate tables, with comparable clustered keys and statistics:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Configuration</th><th scope="col">Read-time computation</th><th scope="col">Materialized parsed value</th><th scope="col">Extra searchable index</th><th scope="col">Write maintenance</th></tr></thead><tbody><tr><td>Direct SQL expression</td><td>Usually yes</td><td>No</td><td>No</td><td>Minimal baseline</td></tr><tr><td>Regular view</td><td>Usually yes</td><td>No</td><td>No</td><td>Minimal baseline</td></tr><tr><td>Indexed view</td><td>Potentially avoided</td><td>In indexed view</td><td>Yes, on view</td><td>View-index maintenance</td></tr><tr><td>Nonpersisted computed column</td><td>Usually yes unless covered by an index</td><td>Not in base row</td><td>No</td><td>Minimal baseline</td></tr><tr><td>Indexed nonpersisted computed column</td><td>Can use stored index keys</td><td>In index</td><td>Yes</td><td>Index maintenance</td></tr><tr><td>Indexed persisted computed column</td><td>Value in base row and index</td><td>In row and index</td><td>Yes</td><td>Computation and index maintenance</td></tr></tbody></table></div>
+<p>The measurements should cover <strong>four distinct query shapes</strong>: primary-key lookup, selective filtering by parsed <code>Code</code>, low-selectivity filtering by <code>Status</code>, and a broad scan that projects the parsed values. Then test inserts, updates to <code>CompositeValue</code>, and deletes. Each optimization has a different likely winner depending on selectivity and write pressure.</p>
+<p>Record <strong>logical reads, CPU time, elapsed time, actual execution plan, output row count, and index/storage footprint</strong>. Repeat runs after warm-up, compare medians rather than single executions, and avoid clearing shared-server caches. Separately run the SQL Server 2025 and SQL Server 2022 engines; changing only compatibility level is not a true engine comparison.</p>
+<p>Start with this environment fingerprint:</p>
+<pre><code class="language-sql">SELECT
+    @@VERSION AS FullVersion,
+    SERVERPROPERTY(&#39;ProductVersion&#39;) AS Build,
+    SERVERPROPERTY(&#39;Edition&#39;) AS Edition,
+    SERVERPROPERTY(&#39;ProductUpdateLevel&#39;) AS CU,
+    DB_NAME() AS DatabaseName,
+    d.compatibility_level,
+    d.collation_name
+FROM sys.databases AS d
+WHERE d.database_id = DB_ID();
+
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+-- Enable the Actual Execution Plan in SSMS before running the test queries.</code></pre>
+<p>Download the <a href="benchmark.sql" download>SQL Server benchmark harness</a> to create the six isolated configurations and inspect the queries yourself. The script contains destructive cleanup statements for objects prefixed <code>ViewBench_</code>: run it <strong>only in a disposable development database</strong>, never in production. <strong>This is a reproducible experiment template—not measured performance data. The SQL script has not been executed against SQL Server 2025 or SQL Server 2022 for this article, and runtime results are intentionally not claimed.</strong></p>
+<h2 id="7-decision-framework-when-should-you-use-which">7. Decision framework: when should you use which?</h2>
+<ul><li><strong>Use a regular view</strong> when you need a reusable, stable abstraction over otherwise efficient queries. Don&#39;t expect materialization.</li><li><strong>Use an indexed view</strong> when measurements show the stored result is valuable enough to offset write, storage, and schema-maintenance costs—especially for suitable repeated aggregations.</li><li><strong>Use a computed column</strong> when one row&#39;s derived value deserves a name and a consistent definition.</li><li><strong>Index a computed column</strong> when queries repeatedly filter or join on its deterministic, indexable result. Do not assume <code>PERSISTED</code> is mandatory.</li><li><strong>Consider <code>PERSISTED</code></strong> when storing the derived value in the base row benefits your access patterns, or when index eligibility requires it.</li><li><strong>Use native relational columns</strong> when you can redesign the schema and the components are genuinely independent values. A faster workaround for an avoidable parsing problem is still a workaround.</li></ul>
+<h2 id="conclusion-optimize-the-work-not-the-abstraction">Conclusion: optimize the work, not the abstraction</h2>
+<p>A regular SQL Server view isn&#39;t a cache. Its value is the <em>contract</em> it provides. An indexed view is materialized data with ongoing maintenance costs. A computed column lets SQL Server understand a row-local expression—and indexing it may be the missing performance feature.</p>
+<p>The productive question isn&#39;t <strong>“Are views faster than queries?”</strong> It is:</p>
+<blockquote><p><strong>What work does this query repeatedly perform, which access path can eliminate that work, and what will it cost every time the data changes?</strong></p></blockquote>
+<p>That is a question worth answering with an execution plan and a repeatable experiment, not a rule of thumb.</p>
+<hr>
+<h2 id="sources-and-further-reading">Sources and further reading</h2>
+<ol><li><a href="https://learn.microsoft.com/en-us/sql/relational-databases/views/views?view=sql-server-ver17">Microsoft Learn — Views</a></li><li><a href="https://learn.microsoft.com/en-us/sql/relational-databases/query-processing-architecture-guide?view=sql-server-ver17">Microsoft Learn — Query processing architecture guide</a></li><li><a href="https://learn.microsoft.com/en-us/sql/relational-databases/views/create-indexed-views?view=sql-server-ver17">Microsoft Learn — Create indexed views</a></li><li><a href="https://learn.microsoft.com/en-us/sql/relational-databases/indexes/indexes-on-computed-columns?view=sql-server-ver17">Microsoft Learn — Indexes on computed columns</a></li><li><a href="https://learn.microsoft.com/en-us/sql/relational-databases/tables/specify-computed-columns-in-a-table?view=sql-server-ver17">Microsoft Learn — Specify computed columns</a></li><li><a href="https://learn.microsoft.com/en-us/sql/sql-server/editions-and-components-of-sql-server-2025?view=sql-server-ver17">Microsoft Learn — Editions and supported features of SQL Server 2025</a></li><li><a href="https://learn.microsoft.com/en-us/troubleshoot/sql/releases/sqlserver-2025/build-versions">Microsoft Learn — SQL Server 2025 build versions</a></li><li><a href="https://learn.microsoft.com/en-us/sql/t-sql/functions/string-split-transact-sql?view=sql-server-ver17">Microsoft Learn — STRING_SPLIT</a></li><li><a href="https://learn.microsoft.com/en-us/sql/t-sql/functions/substring-transact-sql?view=sql-server-ver17">Microsoft Learn — SUBSTRING</a></li><li><a href="https://learn.microsoft.com/en-us/sql/t-sql/statements/alter-database-transact-sql-compatibility-level?view=sql-server-ver17">Microsoft Learn — Database compatibility level</a></li><li><a href="https://learn.microsoft.com/en-us/archive/msdn-magazine/2000/august/sql-server-2000-new-features-provide-unmatched-ease-of-use-and-scalability-to-admins-and-users">MSDN Magazine archive — SQL Server 2000 new features</a></li><li><a href="https://support.microsoft.com/en-us/access/columns-property-page-adp">Microsoft Support — Computed-column formula in SQL Server 7.0 or later</a></li><li><a href="https://flylib.com/books/en/2.256.1.59/1/"><em>Inside Microsoft SQL Server 2005: The Storage Engine</em> — historical reference</a></li></ol>
+      </div>
+
+      <section class="related-articles" aria-labelledby="related-articles-title">
+        <p class="eyebrow">Continue reading</p>
+        <h2 id="related-articles-title">Related articles</h2>
+        <ul>
+          <li><a href="/articles/ef-core-11-same-linq-better-sql/">Same LINQ, Better SQL: Inside EF Core 11</a><span>Understand how EF Core shapes database queries.</span></li>
+          <li><a href="/articles/ef-core-pagination-page-numbers-vs-cursors/">Your EF Core Pagination Is Slower Than You Think</a><span>Explore indexed access paths and query costs.</span></li>
+          <li><a href="/articles/ef-core-entities-not-api-contracts/">Stop Exposing EF Core Entities from Your .NET 10 APIs</a><span>Keep data access and API contracts intentional.</span></li>
+        </ul>
+      </section>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <p class="eyebrow">Discussion</p>
+        <h2 id="comments-title">Comments and reactions</h2>
+        <p class="comments-intro">Have you measured a regular view, indexed view, or computed-column index on a real workload? Share your plan and results.</p>
+        <script src="https://giscus.app/client.js"
+                data-repo="Darawsheh/darawsheh.github.io"
+                data-repo-id="R_kgDOTv89MQ"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOTv89Mc4DC0Gm"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
+      </section>
+
+
+      <footer class="article-footer">
+        <div>
+          <p class="eyebrow">About the author</p>
+          <h2>Islam Darawsheh</h2>
+          <p>Software Architect and Technical Lead focused on enterprise .NET, secure systems, SaaS platforms, integration-heavy solutions, and maintainable software delivery.</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="/articles/">More articles</a>
+          <a class="button" href="https://www.linkedin.com/in/darawsheh/">LinkedIn</a>
+        </div>
+      </footer>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><p>© <span id="year"></span> Islam Darawsheh. Professional information only.</p></div>
+  </footer>
+  <script src="../../assets/script.js" defer></script>
+  <!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"c49bf167d60b425c9686b4c56244eae8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
+

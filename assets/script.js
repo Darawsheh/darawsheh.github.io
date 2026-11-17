@@ -29,6 +29,13 @@
 
   const articles = [
     {
+      "slug": "sql-server-views-dont-cache-data",
+      "title": "SQL Server Views Don't Cache Data — So When Are They Actually Faster?",
+      "description": "Regular vs. indexed SQL Server views, computed columns, NVARCHAR parsing, release history, and an honest benchmark design for SQL Server 2025 and 2022.",
+      "published": "2026-11-17"
+    },
+
+    {
       slug: 'csharp-15-union-types-result-patterns',
       title: 'C# 15 Union Types: The End of Error-Prone Result Patterns?',
       description: 'How compiler-checked outcomes reshape API design, with practical validation, Minimal API mapping, JSON contracts, and the limits of native unions.',

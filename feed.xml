@@ -6,6 +6,13 @@
     <description>Practical articles on software architecture, enterprise .NET, secure systems, and maintainable software design.</description>
     <language>en</language>
     <item>
+      <title>SQL Server Views Don&#39;t Cache Data — So When Are They Actually Faster?</title>
+      <link>https://darawsheh.github.io/articles/sql-server-views-dont-cache-data/</link>
+      <guid isPermaLink="true">https://darawsheh.github.io/articles/sql-server-views-dont-cache-data/</guid>
+      <pubDate>Tue, 17 Nov 2026 04:00:00 GMT</pubDate>
+      <description>Regular vs. indexed SQL Server views, computed columns, NVARCHAR parsing, release history, and an honest benchmark design for SQL Server 2025 and 2022.</description>
+    </item>
+    <item>
       <title>C# 15 Union Types: The End of Error-Prone Result Patterns?</title>
       <link>https://darawsheh.github.io/articles/csharp-15-union-types-result-patterns/</link>
       <guid isPermaLink="true">https://darawsheh.github.io/articles/csharp-15-union-types-result-patterns/</guid>

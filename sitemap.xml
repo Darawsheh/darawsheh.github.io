@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://darawsheh.github.io/</loc>
-    <lastmod>2026-11-16</lastmod>
+    <lastmod>2026-11-17</lastmod>
   </url>
   <url>
     <loc>https://darawsheh.github.io/islam-darawsheh/</loc>
@@ -10,7 +10,7 @@
   </url>
   <url>
     <loc>https://darawsheh.github.io/articles/</loc>
-    <lastmod>2026-11-16</lastmod>
+    <lastmod>2026-11-17</lastmod>
   </url>
   <url>
     <loc>https://darawsheh.github.io/articles/mcp-dotnet-build-mcp-server-csharp/</loc>
@@ -67,6 +67,10 @@
   <url>
     <loc>https://darawsheh.github.io/articles/csharp-15-union-types-result-patterns/</loc>
     <lastmod>2026-11-16</lastmod>
+  </url>
+  <url>
+    <loc>https://darawsheh.github.io/articles/sql-server-views-dont-cache-data/</loc>
+    <lastmod>2026-11-17</lastmod>
   </url>
 </urlset>
 
